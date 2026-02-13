@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "983892991638",
+    "project_id": "smartagro-d05",
+    "storage_bucket": "smartagro-d05.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:983892991638:android:3eb13a1b2ecef62e7cecb7",
+        "android_client_info": {
+          "package_name": "com.agrishop.app.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDyPMt7zzFt2MyI1zPnmHQh7_psVWoxtVQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
