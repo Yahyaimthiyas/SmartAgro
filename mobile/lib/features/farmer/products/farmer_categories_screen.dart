@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/services/localization_service.dart';
 import '../products/farmer_product_list_screen.dart';
+import 'widgets/product_grid_card.dart';
 
 class FarmerCategoriesScreen extends StatefulWidget {
   final bool showBack;
@@ -17,11 +18,25 @@ class FarmerCategoriesScreen extends StatefulWidget {
 
 class _FarmerCategoriesScreenState extends State<FarmerCategoriesScreen> {
   final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_onSearchChanged);
+  }
 
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text.trim().toLowerCase();
+    });
   }
 
   @override
@@ -37,7 +52,9 @@ class _FarmerCategoriesScreenState extends State<FarmerCategoriesScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               sliver: SliverToBoxAdapter(
                 child: Text(
-                  LocalizationService.tr('title_categories'),
+                  _searchQuery.isEmpty 
+                      ? LocalizationService.tr('title_categories')
+                      : (LocalizationService.isTamil ? 'தேடல் முடிவுகள்' : 'Search Results'),
                   style: GoogleFonts.notoSansTamil(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -46,7 +63,7 @@ class _FarmerCategoriesScreenState extends State<FarmerCategoriesScreen> {
                 ),
               ),
             ),
-            _buildCategoryGrid(),
+            _searchQuery.isEmpty ? _buildCategoryGrid() : _buildSearchProductsResultGrid(),
             const SliverToBoxAdapter(child: SizedBox(height: 40)),
           ],
         ),
@@ -100,9 +117,15 @@ class _FarmerCategoriesScreenState extends State<FarmerCategoriesScreen> {
                 child: TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Search seeds, fertilizers...',
-                    hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400),
+                    hintText: LocalizationService.isTamil ? 'விதை, உரம் தேடுக...' : 'Search seeds, fertilizers...',
+                    hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 14),
                     prefixIcon: const Icon(Icons.search, color: AppColors.primary),
+                    suffixIcon: _searchQuery.isNotEmpty 
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 20),
+                            onPressed: () => _searchController.clear(),
+                          )
+                        : null,
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(vertical: 14),
                   ),
@@ -118,6 +141,7 @@ class _FarmerCategoriesScreenState extends State<FarmerCategoriesScreen> {
 
 
   Widget _buildCategoryGrid() {
+    // ... categories stream builder ...
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('categories')
@@ -144,7 +168,7 @@ class _FarmerCategoriesScreenState extends State<FarmerCategoriesScreen> {
               crossAxisCount: 2,
               mainAxisSpacing: 16,
               crossAxisSpacing: 16,
-              childAspectRatio: 0.9, // Slightly taller
+              childAspectRatio: 0.9, 
             ),
             delegate: SliverChildBuilderDelegate(
               (context, index) {
@@ -172,6 +196,64 @@ class _FarmerCategoriesScreenState extends State<FarmerCategoriesScreen> {
                 );
               },
               childCount: docs.length,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSearchProductsResultGrid() {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance.collection('products').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator()));
+        }
+
+        final allProducts = snapshot.data?.docs ?? [];
+        final filteredProducts = allProducts.where((doc) {
+          final data = doc.data();
+          final nameEn = (data['name_en'] as String? ?? '').toLowerCase();
+          final nameTa = (data['name_ta'] as String? ?? '').toLowerCase();
+          return nameEn.contains(_searchQuery) || nameTa.contains(_searchQuery);
+        }).toList();
+
+        if (filteredProducts.isEmpty) {
+          return SliverToBoxAdapter(
+            child: Center(
+              child: Column(
+                children: [
+                   const SizedBox(height: 40),
+                   Icon(Icons.search_off, size: 64, color: Colors.grey.shade300),
+                   const SizedBox(height: 16),
+                   Text(
+                      LocalizationService.isTamil ? 'முடிவுகள் ஏதுமில்லை' : 'No products found',
+                      style: GoogleFonts.poppins(color: AppColors.textSecondary),
+                   ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 0.68,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                return ProductGridCard(
+                  productId: filteredProducts[index].id,
+                  data: filteredProducts[index].data(),
+                );
+              },
+              childCount: filteredProducts.length,
             ),
           ),
         );

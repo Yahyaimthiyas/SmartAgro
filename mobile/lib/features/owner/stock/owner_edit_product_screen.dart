@@ -737,6 +737,9 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
         data['imageUrl'] = imageUrl;
       }
 
+      // [NEW] Clear missing info badge when saved manually
+      data['needsManualUpdate'] = false;
+
       if (widget.productId == null) {
         data['createdAt'] = FieldValue.serverTimestamp();
         await docRef.set(data);

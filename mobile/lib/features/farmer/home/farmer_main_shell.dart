@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/services/localization_service.dart';
 import 'farmer_home_screen.dart';
 import '../products/farmer_categories_screen.dart';
-import '../advisory/farmer_advisory_hub_screen.dart';
+import '../advisory/farmer_ai_plant_doctor_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../profile/farmer_profile_screen.dart';
 import '../profile/farmer_profile_setup_screen.dart';
@@ -26,7 +26,7 @@ class _FarmerMainShellState extends State<FarmerMainShell> {
     _pages = const [
       FarmerHomeScreen(),
       FarmerCategoriesScreen(),
-      FarmerAdvisoryHubScreen(),
+      FarmerAiPlantDoctorScreen(),
       FarmerProfileScreen(),
     ];
   }

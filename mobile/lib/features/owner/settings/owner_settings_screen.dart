@@ -18,6 +18,7 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
   final _storage = const FlutterSecureStorage();
   final _localAuth = LocalAuthentication();
   bool _biometricsEnabled = false;
+  bool _pinEnabled = true; // [NEW] Track PIN security state
 
   @override
   void initState() {
@@ -27,8 +28,11 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
 
   Future<void> _loadSettings() async {
     final bio = await _storage.read(key: 'biometrics_enabled');
+    final pin = await _storage.read(key: 'pin_enabled'); // [NEW] Read pin state
+    
     setState(() {
       _biometricsEnabled = bio == 'true';
+      _pinEnabled = pin == null || pin == 'true'; // Default to true if not set
     });
   }
 
@@ -57,6 +61,46 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
       }
     } catch (e) {
       print("Auth error: $e");
+    }
+  }
+
+  // [NEW] Toggle PIN Security
+  Future<void> _togglePin(bool value) async {
+    if (value) {
+      // User is enabling PIN security
+      await _storage.write(key: 'pin_enabled', value: 'true');
+      await _storage.delete(key: 'owner_pin'); // Force setup of new PIN
+      
+      setState(() => _pinEnabled = true);
+      
+      if (!mounted) return;
+      // Navigate to security gate to set up the new PIN immediately
+      Navigator.pushNamedAndRemoveUntil(context, '/owner-secure', (route) => false);
+    } else {
+      // User is disabling PIN security
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text(LocalizationService.tr('settings_pin_disable_dialog_title')),
+          content: Text(LocalizationService.tr('settings_pin_disable_dialog_msg')),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context), 
+              child: Text(LocalizationService.tr('btn_cancel'))
+            ),
+            TextButton(
+              onPressed: () async {
+                await _storage.write(key: 'pin_enabled', value: 'false');
+                await _storage.delete(key: 'owner_pin'); // Delete existing pin mapping
+                
+                setState(() => _pinEnabled = false);
+                Navigator.pop(context);
+              }, 
+              child: Text(LocalizationService.tr('btn_confirm'), style: const TextStyle(color: Colors.red))
+            ),
+          ],
+        ),
+      );
     }
   }
 
@@ -124,38 +168,54 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
         children: [
           _SectionHeader(title: LocalizationService.tr('settings_access_control')),
           const SizedBox(height: 12),
+          
+          // [NEW] PIN Enable/Disable Tile
           _SettingsTile(
-            icon: Icons.fingerprint,
-            title: LocalizationService.tr('settings_biometric_title'),
-            subtitle: LocalizationService.tr('settings_biometric_subtitle'),
+            icon: Icons.security,
+            title: LocalizationService.tr('settings_pin_toggle_title'),
+            subtitle: LocalizationService.tr('settings_pin_toggle_subtitle'),
             trailing: Switch(
-              value: _biometricsEnabled,
-              onChanged: _toggleBiometrics,
+              value: _pinEnabled,
+              onChanged: _togglePin,
               activeColor: AppColors.primary,
             ),
           ),
           const SizedBox(height: 12),
-          _SettingsTile(
-            icon: Icons.lock_reset,
-            title: LocalizationService.tr('settings_reset_pin_title'),
-            subtitle: LocalizationService.tr('settings_reset_pin_subtitle'),
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (_) => AlertDialog(
-                  title: Text(LocalizationService.tr('settings_reset_pin_dialog_title')),
-                  content: Text(LocalizationService.tr('settings_reset_pin_dialog_msg')),
-                  actions: [
-                    TextButton(onPressed: () => Navigator.pop(context), child: Text(LocalizationService.tr('btn_cancel'))),
-                    TextButton(onPressed: () {
-                      Navigator.pop(context);
-                      _resetPin();
-                    }, child: Text(LocalizationService.tr('btn_reset'), style: const TextStyle(color: Colors.red))),
-                  ],
-                ),
-              );
-            },
-          ),
+
+          if (_pinEnabled) ...[
+            _SettingsTile(
+              icon: Icons.fingerprint,
+              title: LocalizationService.tr('settings_biometric_title'),
+              subtitle: LocalizationService.tr('settings_biometric_subtitle'),
+              trailing: Switch(
+                value: _biometricsEnabled,
+                onChanged: _toggleBiometrics,
+                activeColor: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _SettingsTile(
+              icon: Icons.lock_reset,
+              title: LocalizationService.tr('settings_reset_pin_title'),
+              subtitle: LocalizationService.tr('settings_reset_pin_subtitle'),
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: Text(LocalizationService.tr('settings_reset_pin_dialog_title')),
+                    content: Text(LocalizationService.tr('settings_reset_pin_dialog_msg')),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(context), child: Text(LocalizationService.tr('btn_cancel'))),
+                      TextButton(onPressed: () {
+                        Navigator.pop(context);
+                        _resetPin();
+                      }, child: Text(LocalizationService.tr('btn_reset'), style: const TextStyle(color: Colors.red))),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
           
           const SizedBox(height: 32),
           _SectionHeader(title: LocalizationService.tr('settings_app_settings')),

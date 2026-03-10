@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/services/localization_service.dart';
 import '../../../core/widgets/common_image.dart'; // [NEW]
+import 'owner_bulk_upload_screen.dart';
 import 'owner_edit_product_screen.dart';
 
 class OwnerStockScreen extends StatefulWidget {
@@ -35,6 +36,17 @@ class _OwnerStockScreenState extends State<OwnerStockScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.upload_file_rounded),
+            tooltip: 'Bulk Upload CSV',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const OwnerBulkUploadScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -244,6 +256,7 @@ class _ProductStockCard extends StatelessWidget {
     final unitEn = data['unit_en'] as String? ?? '';
     final stock = data['stock'] as int? ?? 0;
     final imageUrl = data['imageUrl'] as String?;
+    final needsManualUpdate = data['needsManualUpdate'] as bool? ?? false;
     
     // [NEW] Offer info
     final isOfferActive = data['isOfferActive'] as bool? ?? false;
@@ -328,13 +341,34 @@ class _ProductStockCard extends StatelessWidget {
                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                    children: [
                       Expanded(
-                        child: Text(
-                          displayName,
-                          style: isTa 
-                             ? GoogleFonts.notoSansTamil(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF1A1C1E))
-                             : GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF1A1C1E)),
-                          maxLines: 1, 
-                          overflow: TextOverflow.ellipsis,
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                displayName,
+                                style: isTa 
+                                   ? GoogleFonts.notoSansTamil(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF1A1C1E))
+                                   : GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF1A1C1E)),
+                                maxLines: 1, 
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (needsManualUpdate || nameTa.isEmpty) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.shade50,
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: Colors.orange.shade200),
+                                ),
+                                child: Text(
+                                  "⚠️ Info",
+                                  style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.orange.shade800),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                       if (stock <= 5)

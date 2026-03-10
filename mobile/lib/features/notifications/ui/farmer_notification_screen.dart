@@ -8,7 +8,7 @@ import '../../../../core/services/localization_service.dart';
 import '../../notifications/models/app_notification.dart';
 import '../../notifications/repositories/notification_repository.dart';
 import '../../farmer/orders/farmer_orders_screen.dart';
-import '../../farmer/advisory/farmer_advisory_messages_screen.dart';
+import '../../farmer/advisory/farmer_ai_plant_doctor_screen.dart';
 
 class FarmerNotificationScreen extends StatelessWidget {
   const FarmerNotificationScreen({super.key});
@@ -83,7 +83,7 @@ class FarmerNotificationScreen extends StatelessWidget {
                       );
                    } else if (notification.type == NotificationType.advisory) {
                       Navigator.of(context).push(
-                         MaterialPageRoute(builder: (_) => const FarmerAdvisoryMessagesScreen())
+                         MaterialPageRoute(builder: (_) => const FarmerAiPlantDoctorScreen())
                       );
                    }
                 },

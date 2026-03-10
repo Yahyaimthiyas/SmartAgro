@@ -7,12 +7,11 @@ import '../../../core/constants/colors.dart';
 import '../../../core/widgets/common_image.dart';
 import '../../../core/services/localization_service.dart';
 import '../products/farmer_categories_screen.dart';
-import '../products/farmer_product_details_screen.dart'; // [FIX] Added import
+import '../products/farmer_product_details_screen.dart'; 
 import '../orders/farmer_orders_screen.dart';
-import '../orders/farmer_order_tracking_screen.dart'; // [FIX] Added import
+import '../orders/farmer_order_tracking_screen.dart'; 
 import '../rebuy/farmer_rebuy_screen.dart';
-import '../crops/farmer_my_crops_screen.dart';
-import '../advisory/farmer_advisory_messages_screen.dart';
+import '../advisory/farmer_ai_plant_doctor_screen.dart';
 import '../../notifications/ui/farmer_notification_screen.dart';
 import '../../notifications/repositories/notification_repository.dart';
 import '../../notifications/models/app_notification.dart';
@@ -307,7 +306,7 @@ class _FarmerHomeScreenState extends State<FarmerHomeScreen> {
 
   Widget _buildBannerSection() {
     return SizedBox(
-      height: 180,
+      height: 200,
       child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: FirebaseFirestore.instance
             .collection('products')
@@ -317,7 +316,7 @@ class _FarmerHomeScreenState extends State<FarmerHomeScreen> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Container(
-              height: 180,
+              height: 200,
               decoration: BoxDecoration(
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(24),
@@ -536,7 +535,7 @@ class _FarmerHomeScreenState extends State<FarmerHomeScreen> {
       shrinkWrap: true,
       mainAxisSpacing: 16,
       crossAxisSpacing: 16,
-      childAspectRatio: 1.3,
+      childAspectRatio: 1.1,
       physics: const NeverScrollableScrollPhysics(),
       children: [
         _quickActionCard(
@@ -547,14 +546,7 @@ class _FarmerHomeScreenState extends State<FarmerHomeScreen> {
           iconColor: const Color(0xFF2E7D32),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FarmerCategoriesScreen(showBack: true))),
         ),
-        _quickActionCard(
-          icon: Icons.eco_outlined,
-          titleTa: LocalizationService.tr('home_my_crops'),
-          titleEn: LocalizationService.tr('home_my_crops_sub'),
-          color: const Color(0xFFFFF3E0), // Light Orange
-          iconColor: const Color(0xFFEF6C00),
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FarmerMyCropsScreen())),
-        ),
+
         _quickActionCard(
           icon: Icons.history_outlined,
           titleTa: LocalizationService.tr('home_rebuy'),
@@ -570,6 +562,14 @@ class _FarmerHomeScreenState extends State<FarmerHomeScreen> {
           color: const Color(0xFFF3E5F5), // Light Purple
           iconColor: const Color(0xFF7B1FA2),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FarmerOrdersScreen())),
+        ),
+        _quickActionCard(
+          icon: Icons.psychology_outlined,
+          titleTa: LocalizationService.tr('home_ai_doctor'),
+          titleEn: LocalizationService.tr('home_ai_doctor_sub'),
+          color: const Color(0xFFFFF3E0), // Light Amber
+          iconColor: const Color(0xFFFF8F00),
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FarmerAiPlantDoctorScreen())),
         ),
       ],
     );
@@ -602,10 +602,9 @@ class _FarmerHomeScreenState extends State<FarmerHomeScreen> {
             ),
           ],
         ),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          //mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
               padding: const EdgeInsets.all(12),
@@ -615,26 +614,34 @@ class _FarmerHomeScreenState extends State<FarmerHomeScreen> {
               ),
               child: Icon(icon, color: iconColor, size: 28),
             ),
-            const Spacer(),
-            Text(
-              primary,
-              style: GoogleFonts.notoSansTamil(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF1E293B),
-               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            const SizedBox(height: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    primary,
+                    style: GoogleFonts.notoSansTamil(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1E293B),
+                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                   const SizedBox(height: 4),
+                   Container(
+                     width: 20,
+                     height: 4,
+                     decoration: BoxDecoration(
+                       color: iconColor.withOpacity(0.3),
+                       borderRadius: BorderRadius.circular(2),
+                     ),
+                   )
+                ],
+              ),
             ),
-             const SizedBox(height: 4),
-             Container(
-               width: 20,
-               height: 4,
-               decoration: BoxDecoration(
-                 color: iconColor.withOpacity(0.3),
-                 borderRadius: BorderRadius.circular(2),
-               ),
-             )
           ],
         ),
       ),
@@ -754,10 +761,10 @@ class _FarmerHomeScreenState extends State<FarmerHomeScreen> {
 
         if (doc == null) {
           return _advisoryCard(
-            titleTa: LocalizationService.tr('advisory_coming_soon_ta'),
-            titleEn: LocalizationService.tr('advisory_coming_soon_en'),
-            messageTa: '',
-            messageEn: '',
+            titleTa: LocalizationService.tr('nav_advisory'),
+            titleEn: LocalizationService.isTamil ? 'AI பயிர் மருத்துவர்' : 'AI Plant Doctor',
+            messageTa: LocalizationService.tr('msg_advisory_empty_desc'),
+            messageEn: LocalizationService.tr('msg_advisory_empty_desc'),
           );
         }
 
@@ -859,7 +866,7 @@ class _FarmerHomeScreenState extends State<FarmerHomeScreen> {
              width: double.infinity,
              child: OutlinedButton(
                onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FarmerAdvisoryMessagesScreen()));
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FarmerAiPlantDoctorScreen()));
                },
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Color(0xFFFFA000)),

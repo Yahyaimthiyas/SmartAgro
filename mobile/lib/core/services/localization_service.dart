@@ -9,7 +9,8 @@ class LocalizationService {
   static final ValueNotifier<Locale> localeNotifier = ValueNotifier(const Locale('ta'));
 
   static Future<void> load(Locale locale) async {
-    final String jsonString = await rootBundle.loadString('assets/lang/${locale.languageCode}.json');
+    final ByteData data = await rootBundle.load('assets/lang/${locale.languageCode}.json');
+    final String jsonString = utf8.decode(data.buffer.asUint8List());
     Map<String, dynamic> jsonMap = json.decode(jsonString);
     _localizedStrings = jsonMap.map((key, value) => MapEntry(key, value.toString()));
   }

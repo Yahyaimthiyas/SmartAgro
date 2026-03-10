@@ -52,6 +52,16 @@ class _OwnerSecurityGateScreenState extends State<OwnerSecurityGateScreen> with 
   }
 
   Future<void> _checkSecurityStatus() async {
+    final pinEnabled = await _storage.read(key: 'pin_enabled');
+    
+    // [NEW] Bypass check: if owner explicitly disabled PIN, go straight to dashboard
+    if (pinEnabled == 'false') {
+      if (mounted) {
+         _navigateToDashboard();
+      }
+      return;
+    }
+
     final pin = await _storage.read(key: 'owner_pin');
     final bioEnabled = await _storage.read(key: 'biometrics_enabled') == 'true';
     
