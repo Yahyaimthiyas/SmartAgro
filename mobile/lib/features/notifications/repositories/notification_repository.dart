@@ -9,9 +9,9 @@ class NotificationRepository {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // Replace these with your actual OneSignal credentials
-  static const String _oneSignalAppId = "675d523a-e2d2-4662-8d59-17b41ac937e2";
+  static const String _oneSignalAppId = "xxxxxxxxxxxxx";
   static const String _oneSignalRestApiKey =
-      "os_v2_app_m5oveoxc2jdgfdkzc62bvsjx4l7gisz3xekuawmyzk2jebapagew67rwgvmgiwgqomfhpbdj6kiocko3aysw2swo3n5agdn7l3andwq";
+      "xxxxxxxxxxxxxxxxxxxxxxxxx";
 
   // Set to false to pause OneSignal (saves API limits)
   static const bool useOneSignal = true;
