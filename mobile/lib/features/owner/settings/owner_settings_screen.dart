@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -18,7 +19,8 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
   final _storage = const FlutterSecureStorage();
   final _localAuth = LocalAuthentication();
   bool _biometricsEnabled = false;
-  bool _pinEnabled = true; // [NEW] Track PIN security state
+  bool _pinEnabled = true;
+  bool _isShopOpen = true; // [NEW] Track shop status
 
   @override
   void initState() {
@@ -28,12 +30,49 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
 
   Future<void> _loadSettings() async {
     final bio = await _storage.read(key: 'biometrics_enabled');
-    final pin = await _storage.read(key: 'pin_enabled'); // [NEW] Read pin state
-    
+    final pin = await _storage.read(key: 'pin_enabled');
+
+    bool isShopOpen = true;
+    try {
+      // Load shop status from Firestore.
+      final shopSnap = await FirebaseFirestore.instance
+          .collection('shop_settings')
+          .doc('current')
+          .get();
+      isShopOpen = shopSnap.data()?['isOpen'] ?? true;
+    } on FirebaseException {
+      // Keep a safe default when permissions/network are not available.
+      isShopOpen = true;
+    }
+
+    if (!mounted) return;
     setState(() {
       _biometricsEnabled = bio == 'true';
-      _pinEnabled = pin == null || pin == 'true'; // Default to true if not set
+      _pinEnabled = pin == null || pin == 'true';
+      _isShopOpen = isShopOpen;
     });
+  }
+
+  Future<void> _toggleShopStatus(bool value) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('shop_settings')
+          .doc('current')
+          .set({
+            'isOpen': value,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+
+      if (!mounted) return;
+      setState(() {
+        _isShopOpen = value;
+      });
+    } on FirebaseException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? 'Unable to update shop status')),
+      );
+    }
   }
 
   Future<void> _toggleBiometrics(bool value) async {
@@ -41,7 +80,9 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
     final canCheck = await _localAuth.canCheckBiometrics;
     if (!canCheck) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(LocalizationService.tr('settings_bio_unavailable'))),
+        SnackBar(
+          content: Text(LocalizationService.tr('settings_bio_unavailable')),
+        ),
       );
       return;
     }
@@ -49,12 +90,17 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
     // 2. Verify Identity
     try {
       final didAuth = await _localAuth.authenticate(
-        localizedReason: value ? 'Verify to enable biometrics' : 'Verify to disable biometrics',
+        localizedReason: value
+            ? 'Verify to enable biometrics'
+            : 'Verify to disable biometrics',
         options: const AuthenticationOptions(stickyAuth: true),
       );
 
       if (didAuth) {
-        await _storage.write(key: 'biometrics_enabled', value: value.toString());
+        await _storage.write(
+          key: 'biometrics_enabled',
+          value: value.toString(),
+        );
         setState(() {
           _biometricsEnabled = value;
         });
@@ -70,33 +116,46 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
       // User is enabling PIN security
       await _storage.write(key: 'pin_enabled', value: 'true');
       await _storage.delete(key: 'owner_pin'); // Force setup of new PIN
-      
+
       setState(() => _pinEnabled = true);
-      
+
       if (!mounted) return;
       // Navigate to security gate to set up the new PIN immediately
-      Navigator.pushNamedAndRemoveUntil(context, '/owner-secure', (route) => false);
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/owner-secure',
+        (route) => false,
+      );
     } else {
       // User is disabling PIN security
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          title: Text(LocalizationService.tr('settings_pin_disable_dialog_title')),
-          content: Text(LocalizationService.tr('settings_pin_disable_dialog_msg')),
+          title: Text(
+            LocalizationService.tr('settings_pin_disable_dialog_title'),
+          ),
+          content: Text(
+            LocalizationService.tr('settings_pin_disable_dialog_msg'),
+          ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context), 
-              child: Text(LocalizationService.tr('btn_cancel'))
+              onPressed: () => Navigator.pop(context),
+              child: Text(LocalizationService.tr('btn_cancel')),
             ),
             TextButton(
               onPressed: () async {
                 await _storage.write(key: 'pin_enabled', value: 'false');
-                await _storage.delete(key: 'owner_pin'); // Delete existing pin mapping
-                
+                await _storage.delete(
+                  key: 'owner_pin',
+                ); // Delete existing pin mapping
+
                 setState(() => _pinEnabled = false);
                 Navigator.pop(context);
-              }, 
-              child: Text(LocalizationService.tr('btn_confirm'), style: const TextStyle(color: Colors.red))
+              },
+              child: Text(
+                LocalizationService.tr('btn_confirm'),
+                style: const TextStyle(color: Colors.red),
+              ),
             ),
           ],
         ),
@@ -109,7 +168,11 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
     // which will detect no PIN and trigger setup mode.
     await _storage.delete(key: 'owner_pin');
     if (!mounted) return;
-    Navigator.pushNamedAndRemoveUntil(context, '/owner-secure', (route) => false);
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/owner-secure',
+      (route) => false,
+    );
   }
 
   Future<void> _logout() async {
@@ -166,9 +229,35 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          _SectionHeader(title: LocalizationService.tr('settings_access_control')),
           const SizedBox(height: 12),
-          
+          _SectionHeader(
+            title: LocalizationService.isTamil ? 'கடை நிலை' : 'Shop Status',
+          ),
+          const SizedBox(height: 12),
+          _SettingsTile(
+            icon: Icons.storefront,
+            title: LocalizationService.isTamil
+                ? 'கடை திறந்துள்ளதா'
+                : 'Shop Open',
+            subtitle: _isShopOpen
+                ? (LocalizationService.isTamil
+                      ? 'தற்போது திறக்கப்பட்டுள்ளது'
+                      : 'Currently accepting orders')
+                : (LocalizationService.isTamil
+                      ? 'தற்போது மூடப்பட்டுள்ளது'
+                      : 'Currently closed'),
+            trailing: Switch(
+              value: _isShopOpen,
+              onChanged: _toggleShopStatus,
+              activeColor: AppColors.primary,
+            ),
+          ),
+          const SizedBox(height: 32),
+          _SectionHeader(
+            title: LocalizationService.tr('settings_access_control'),
+          ),
+          const SizedBox(height: 12),
+
           // [NEW] PIN Enable/Disable Tile
           _SettingsTile(
             icon: Icons.security,
@@ -202,23 +291,38 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
                 showDialog(
                   context: context,
                   builder: (_) => AlertDialog(
-                    title: Text(LocalizationService.tr('settings_reset_pin_dialog_title')),
-                    content: Text(LocalizationService.tr('settings_reset_pin_dialog_msg')),
+                    title: Text(
+                      LocalizationService.tr('settings_reset_pin_dialog_title'),
+                    ),
+                    content: Text(
+                      LocalizationService.tr('settings_reset_pin_dialog_msg'),
+                    ),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(context), child: Text(LocalizationService.tr('btn_cancel'))),
-                      TextButton(onPressed: () {
-                        Navigator.pop(context);
-                        _resetPin();
-                      }, child: Text(LocalizationService.tr('btn_reset'), style: const TextStyle(color: Colors.red))),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(LocalizationService.tr('btn_cancel')),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _resetPin();
+                        },
+                        child: Text(
+                          LocalizationService.tr('btn_reset'),
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
                     ],
                   ),
                 );
               },
             ),
           ],
-          
+
           const SizedBox(height: 32),
-          _SectionHeader(title: LocalizationService.tr('settings_app_settings')),
+          _SectionHeader(
+            title: LocalizationService.tr('settings_app_settings'),
+          ),
           const SizedBox(height: 12),
           ValueListenableBuilder<Locale>(
             valueListenable: LocalizationService.localeNotifier,
@@ -226,7 +330,9 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
               return _SettingsTile(
                 icon: Icons.language,
                 title: LocalizationService.tr('settings_language'),
-                subtitle: locale.languageCode == 'ta' ? "தமிழ் (Tamil)" : "English",
+                subtitle: locale.languageCode == 'ta'
+                    ? "தமிழ் (Tamil)"
+                    : "English",
                 onTap: () {
                   _showLanguageDialog(context);
                 },

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/colors.dart';
 import '../../../core/services/localization_service.dart';
+import 'owner_create_customer_screen.dart';
 import 'owner_farmer_details_screen.dart';
 
 class OwnerFarmersScreen extends StatelessWidget {
@@ -24,6 +25,17 @@ class OwnerFarmersScreen extends StatelessWidget {
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const OwnerCreateCustomerScreen()),
+        ),
+        backgroundColor: AppColors.primary,
+        icon: const Icon(Icons.person_add, color: Colors.white),
+        label: Text(
+          LocalizationService.isTamil ? 'புதிய விவசாயி' : 'Add Customer',
+          style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, color: Colors.white),
         ),
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(

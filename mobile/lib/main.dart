@@ -29,6 +29,7 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
+  static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
   const MyApp({super.key});
 
   @override
@@ -42,6 +43,7 @@ class MyApp extends StatelessWidget {
         valueListenable: LocalizationService.localeNotifier,
         builder: (context, locale, child) {
           return MaterialApp(
+            scaffoldMessengerKey: scaffoldMessengerKey,
             title: 'AgriShop',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,

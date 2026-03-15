@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/services/localization_service.dart';
 import '../products/farmer_product_list_screen.dart';
+import '../cart/farmer_cart_screen.dart';
 import 'widgets/product_grid_card.dart';
 
 class FarmerCategoriesScreen extends StatefulWidget {
@@ -64,6 +65,10 @@ class _FarmerCategoriesScreenState extends State<FarmerCategoriesScreen> {
               ),
             ),
             _searchQuery.isEmpty ? _buildCategoryGrid() : _buildSearchProductsResultGrid(),
+            if (_searchQuery.isEmpty) ...[
+              const SliverToBoxAdapter(child: SizedBox(height: 32)),
+              _buildHorizontalCategoryLists(),
+            ],
             const SliverToBoxAdapter(child: SizedBox(height: 40)),
           ],
         ),
@@ -84,6 +89,15 @@ class _FarmerCategoriesScreenState extends State<FarmerCategoriesScreen> {
               onPressed: () => Navigator.of(context).pop(),
             )
           : null,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.shopping_cart_outlined, color: AppColors.textPrimary),
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const FarmerCartScreen()),
+          ),
+        ),
+        const SizedBox(width: 8),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -258,6 +272,93 @@ class _FarmerCategoriesScreenState extends State<FarmerCategoriesScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildHorizontalCategoryLists() {
+    final isTa = LocalizationService.isTamil;
+    const categoriesToShow = [
+      {'id': 'seeds', 'en': 'Seeds', 'ta': 'விதைகள்'},
+      {'id': 'fertilizers', 'en': 'Fertilizers', 'ta': 'உரங்கள்'},
+      {'id': 'pesticides', 'en': 'Pesticides', 'ta': 'பூச்சிக்கொல்லிகள்'},
+      {'id': 'pgr', 'en': 'Growth Regulators (PGR)', 'ta': 'வளர்ச்சி ஊக்கிகள்'},
+      {'id': 'biopesticides', 'en': 'Bio Pesticides', 'ta': 'உயிர் பூச்சிக்கொல்லிகள்'},
+    ];
+
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final cat = categoriesToShow[index];
+          return _buildHorizontalCategoryRow(cat, isTa);
+        },
+        childCount: categoriesToShow.length,
+      ),
+    );
+  }
+
+  Widget _buildHorizontalCategoryRow(Map<String, String> cat, bool isTa) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                isTa ? cat['ta']! : cat['en']!,
+                style: GoogleFonts.notoSansTamil(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              TextButton(
+                onPressed: () {
+                   Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => FarmerProductListScreen(
+                        categoryId: cat['id']!,
+                        categoryNameTa: cat['ta']!,
+                        categoryNameEn: cat['en']!,
+                      ),
+                    ),
+                  );
+                },
+                child: Text(isTa ? 'அனைத்தையும் காண்க' : 'See All'),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 240,
+          child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: FirebaseFirestore.instance
+                .collection('products')
+                .where('categoryId', isEqualTo: cat['id'])
+                .limit(5)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const SizedBox();
+              }
+              final docs = snapshot.data!.docs;
+              return ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                scrollDirection: Axis.horizontal,
+                itemCount: docs.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  return SizedBox(
+                    width: 160,
+                    child: ProductGridCard(
+                      productId: docs[index].id,
+                      data: docs[index].data(),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
     );
   }
 }

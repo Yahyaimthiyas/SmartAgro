@@ -7,6 +7,9 @@ import '../advisory/farmer_ai_plant_doctor_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../profile/farmer_profile_screen.dart';
 import '../profile/farmer_profile_setup_screen.dart';
+import '../../../core/services/debug_notification_service.dart';
+import 'package:provider/provider.dart';
+import '../../auth/providers/auth_provider.dart' as app_auth;
 
 class FarmerMainShell extends StatefulWidget {
   const FarmerMainShell({super.key});
@@ -26,7 +29,7 @@ class _FarmerMainShellState extends State<FarmerMainShell> {
     _pages = const [
       FarmerHomeScreen(),
       FarmerCategoriesScreen(),
-      FarmerAiPlantDoctorScreen(),
+      // FarmerAiPlantDoctorScreen(),
       FarmerProfileScreen(),
     ];
   }
@@ -35,12 +38,14 @@ class _FarmerMainShellState extends State<FarmerMainShell> {
   Widget build(BuildContext context) {
     // Ensure a user is logged in; if not, send them back to login.
     final user = FirebaseAuth.instance.currentUser;
+    final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+
     if (user == null) {
-      // Using addPostFrameCallback to avoid calling Navigator during build.
+      if (authProvider.isLoggedIn) {
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          Navigator.of(context).pushReplacementNamed('/login');
-        }
+        if (mounted) Navigator.of(context).pushReplacementNamed('/login');
       });
       return const Scaffold();
     }
@@ -81,15 +86,22 @@ class _FarmerMainShellState extends State<FarmerMainShell> {
                 icon: const Icon(Icons.storefront_outlined),
                 label: LocalizationService.tr('nav_shops'),
               ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.insights_outlined),
-                label: LocalizationService.tr('nav_advisory'),
-              ),
+              // BottomNavigationBarItem(
+              //   icon: const Icon(Icons.insights_outlined),
+              //   label: LocalizationService.tr('nav_advisory'),
+              // ),
               BottomNavigationBarItem(
                 icon: const Icon(Icons.person_outline),
                 label: LocalizationService.tr('nav_profile'),
               ),
             ],
+          ),
+          floatingActionButton: FloatingActionButton(
+            mini: true,
+            backgroundColor: Colors.red.withOpacity(0.1),
+            elevation: 0,
+            onPressed: () => DebugNotificationService.sendTestNotification(),
+            child: const Icon(Icons.bug_report, color: Colors.red),
           ),
         );
       }

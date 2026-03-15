@@ -26,252 +26,293 @@ class _LoginScreenState extends State<LoginScreen> {
         },
         (error) {
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(error),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: AppColors.danger,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          );
         }
       );
+    } else {
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+            content: Text(LocalizationService.isTamil ? 'செல்லுபடியாகும் எண்ணை உள்ளிடவும்' : 'Please enter a valid phone number'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: AppColors.warning,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+         )
+       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // For specific Tamil font usage throughout
     final isTa = LocalizationService.isTamil;
+    final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: SizedBox(
-          height: MediaQuery.of(context).size.height,
-          child: Stack(
-            children: [
-              // 1. Background Gradient Top
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                height: MediaQuery.of(context).size.height * 0.45,
-                child: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppColors.primaryDark,
-                        AppColors.primary,
-                      ],
-                    ),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(32),
-                      bottomRight: Radius.circular(32),
+      backgroundColor: AppColors.background,
+      body: Stack(
+        children: [
+          // 1. Premium Background with Gradient & Pattern
+          _buildBackground(size),
+
+          // 2. Main Content
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  SizedBox(height: size.height * 0.1),
+                  
+                  // App Branding
+                  _buildBranding(isTa),
+                  
+                  SizedBox(height: size.height * 0.08),
+
+                  // Login Form Card
+                  _buildLoginCard(isTa),
+                  
+                  const SizedBox(height: 32),
+                  
+                  // Secondary Actions
+                  TextButton(
+                    onPressed: () {},
+                    child: Text(
+                      LocalizationService.tr('help_needed'),
+                      style: GoogleFonts.inter(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                        decoration: TextDecoration.underline,
+                      ),
                     ),
                   ),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.agriculture,
-                            size: 64,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          LocalizationService.tr('app_name'),
-                          style: GoogleFonts.notoSansTamil(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          LocalizationService.tr('tagline'),
-                          style: GoogleFonts.notoSansTamil(
-                            fontSize: 16,
-                            color: Colors.white.withOpacity(0.9),
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-              // 2. Content Card
-              Positioned(
-                top: MediaQuery.of(context).size.height * 0.40,
-                left: 20,
-                right: 20,
-                bottom: 20,
-                child: Column(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 24,
-                            offset: const Offset(0, 12),
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            LocalizationService.tr('welcome'),
-                            textAlign: TextAlign.center,
-                            style: isTa
-                              ? GoogleFonts.notoSansTamil(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
-                                )
-                              : GoogleFonts.poppins(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
-                                ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            LocalizationService.tr('enter_phone_subtitle'),
-                            textAlign: TextAlign.center,
-                            style: isTa
-                              ? GoogleFonts.notoSansTamil(
-                                  fontSize: 14,
-                                  color: AppColors.textSecondary,
-                                  height: 1.5,
-                                )
-                              : GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  color: AppColors.textSecondary,
-                                ),
-                          ),
-                          const SizedBox(height: 32),
-
-                          // Phone Input Field
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF5F7FA), // Very light greyish background
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.transparent),
-                            ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  '+91',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Container(width: 1.5, height: 30, color: Colors.grey[300]),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _phoneController,
-                                    keyboardType: TextInputType.phone,
-                                    maxLength: 10,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 1.5,
-                                    ),
-                                    decoration: InputDecoration(
-                                      border: InputBorder.none,
-                                      enabledBorder: InputBorder.none,
-                                      focusedBorder: InputBorder.none,
-                                      errorBorder: InputBorder.none,
-                                      contentPadding: EdgeInsets.zero,
-                                      counterText: "",
-                                      hintText: "98765 43210",
-                                      hintStyle: GoogleFonts.poppins(
-                                        color: Colors.grey[400],
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          
-                          const SizedBox(height: 32),
-
-                          ElevatedButton(
-                            onPressed: _getOtp,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              elevation: 4,
-                              shadowColor: AppColors.primary.withOpacity(0.4),
-                              padding: const EdgeInsets.symmetric(vertical: 20),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  LocalizationService.tr('get_otp'),
-                                  style: isTa
-                                    ? GoogleFonts.notoSansTamil(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      )
-                                    : GoogleFonts.poppins(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                ),
-                                const SizedBox(width: 12),
-                                const Icon(Icons.arrow_forward_rounded, size: 20),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () {
-                         // Help action
-                      },
-                      child: Text(
-                        LocalizationService.tr('help_needed'),
-                        style: isTa
-                          ? GoogleFonts.notoSansTamil(
-                              color: AppColors.textSecondary,
-                              decoration: TextDecoration.underline,
-                            )
-                          : GoogleFonts.poppins(
-                              color: AppColors.textSecondary,
-                              decoration: TextDecoration.underline,
-                            ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                ),
+  Widget _buildBackground(Size size) {
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          // Primary Deep Green Block
+          Container(
+            height: size.height * 0.55,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppColors.primary, Color(0xFF00332B)],
               ),
-            ],
+            ),
+          ),
+          // Decorative Circles
+          Positioned(
+            top: -100,
+            right: -100,
+            child: CircleAvatar(
+              radius: 200,
+              backgroundColor: Colors.white.withOpacity(0.05),
+            ),
+          ),
+          Positioned(
+            top: 200,
+            left: -50,
+            child: CircleAvatar(
+              radius: 100,
+              backgroundColor: Colors.white.withOpacity(0.03),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBranding(bool isTa) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
+          ),
+          child: const Icon(
+            Icons.eco_rounded,
+            size: 64,
+            color: AppColors.accent,
           ),
         ),
+        const SizedBox(height: 24),
+        Text(
+          LocalizationService.tr('app_name'),
+          style: GoogleFonts.outfit(
+            fontSize: 36,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+            letterSpacing: -1,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          LocalizationService.tr('tagline'),
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            color: Colors.white.withOpacity(0.8),
+            letterSpacing: 2,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoginCard(bool isTa) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 30,
+            offset: const Offset(0, 15),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            LocalizationService.tr('welcome'),
+            textAlign: TextAlign.center,
+            style: GoogleFonts.outfit(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            LocalizationService.tr('enter_phone_subtitle'),
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 40),
+
+          // Custom Input Field
+          Text(
+            (isTa ? 'தொலைபேசி எண்' : 'Phone Number').toUpperCase(),
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: AppColors.primary,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildPhoneField(),
+          
+          const SizedBox(height: 40),
+
+          SizedBox(
+            height: 56,
+            child: ElevatedButton(
+              onPressed: _getOtp,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 4,
+                shadowColor: AppColors.primary.withOpacity(0.4),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Text(
+                    LocalizationService.tr('get_otp'),
+                    style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const Positioned(
+                    right: 0,
+                    child: Icon(Icons.arrow_forward_ios_rounded, size: 18),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPhoneField() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Row(
+        children: [
+          Text(
+            '🇮🇳',
+            style: TextStyle(fontSize: 20),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            '+91',
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(width: 1, height: 24, color: AppColors.borderLight),
+          const SizedBox(width: 16),
+          Expanded(
+            child: TextField(
+              controller: _phoneController,
+              keyboardType: TextInputType.phone,
+              maxLength: 10,
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 2,
+              ),
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                fillColor: Colors.transparent,
+                contentPadding: EdgeInsets.zero,
+                counterText: "",
+                hintText: "00000 00000",
+                hintStyle: GoogleFonts.inter(
+                  color: AppColors.textPlaceholder,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: 2,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

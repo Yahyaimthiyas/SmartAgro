@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/colors.dart';
 import '../../../../core/services/localization_service.dart';
 import '../../../../core/widgets/common_image.dart';
+import '../../../../core/utils/price_utils.dart';
 import '../../cart/cart_provider.dart';
 import '../farmer_product_details_screen.dart';
 
@@ -130,7 +131,7 @@ class ProductGridCard extends StatelessWidget {
                             Column(
                                crossAxisAlignment: CrossAxisAlignment.start,
                                children: [
-                                  if (data['isOfferActive'] == true) ...[
+                                  if (PriceUtils.isOfferActuallyActive(data)) ...[
                                     Text(
                                       '₹${data['price']}',
                                       style: GoogleFonts.poppins(
@@ -140,7 +141,7 @@ class ProductGridCard extends StatelessWidget {
                                       ),
                                     ),
                                     Text(
-                                      '₹${_calculateOfferPrice(data).toStringAsFixed(0)}',
+                                      '₹${PriceUtils.calculateFinalPrice(data).toStringAsFixed(0)}',
                                        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green.shade700),
                                     ),
                                   ] else
@@ -151,12 +152,12 @@ class ProductGridCard extends StatelessWidget {
 
                                   if (isStockOut)
                                      Text(
-                                        LocalizationService.tr('stock_out_en'),
+                                        LocalizationService.tr(isTa ? 'stock_out_ta' : 'stock_out_en'),
                                         style: GoogleFonts.poppins(fontSize: 10, color: Colors.red, fontWeight: FontWeight.w600),
                                      )
                                   else if (isLowStock)
                                      Text(
-                                        'Low Stock',
+                                        LocalizationService.tr(isTa ? 'stock_low_ta' : 'stock_low_en'),
                                         style: GoogleFonts.poppins(fontSize: 10, color: Colors.orange, fontWeight: FontWeight.w600),
                                      )
                                ],
@@ -168,7 +169,7 @@ class ProductGridCard extends StatelessWidget {
                                      productId: productId,
                                      nameTa: nameTa,
                                      nameEn: nameEn,
-                                     price: _calculateOfferPrice(data),
+                                     price: PriceUtils.calculateFinalPrice(data),
                                      unitTa: unitTa,
                                      unitEn: unitEn,
                                      imageUrl: data['imageUrl'] as String?,
@@ -201,21 +202,5 @@ class ProductGridCard extends StatelessWidget {
     );
   }
 
-  double _calculateOfferPrice(Map<String, dynamic> data) {
-    final price = (data['price'] as num? ?? 0).toDouble();
-    final isOfferActive = data['isOfferActive'] as bool? ?? false;
-    
-    if (!isOfferActive) return price;
-
-    final offerType = data['offerType'] as String? ?? 'percentage';
-    final offerValue = (data['offerValue'] as num? ?? 0).toDouble();
-
-    if (offerType == 'percentage') {
-      final discount = (price * offerValue) / 100;
-      final finalPrice = price - discount;
-      return finalPrice < 0 ? 0 : finalPrice;
-    } else {
-       return offerValue; // Flat price
-    }
-  }
+  // Removed local _calculateOfferPrice and using PriceUtils
 }

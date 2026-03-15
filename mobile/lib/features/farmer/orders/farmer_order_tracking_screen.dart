@@ -1,9 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'feedback_screen.dart';
 
 import '../../../core/constants/colors.dart';
 import '../../../core/services/localization_service.dart';
+import '../../notifications/repositories/notification_repository.dart';
+import '../../../core/widgets/common_image.dart';
 
 class FarmerOrderTrackingScreen extends StatelessWidget {
   final String orderId;
@@ -157,6 +160,11 @@ class FarmerOrderTrackingScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (data['needsDosageAdvice'] == true) ...[
+                   const SizedBox(height: 16),
+                   _buildFarmerDosageSection(context, orderId, data),
+                ],
+
                 const SizedBox(height: 16),
                 Text(
                   LocalizationService.tr('title_items'),
@@ -202,6 +210,73 @@ class FarmerOrderTrackingScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+
+                if (data['adviceNote'] != null && data['adviceNote'].toString().trim().isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade50,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.amber.shade200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.tips_and_updates, color: Colors.amber, size: 20),
+                            const SizedBox(width: 8),
+                            Text(
+                              LocalizationService.isTamil ? 'இலவச ஆலோசனை' : 'Free Advice Note',
+                              style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, color: Colors.amber.shade900),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          data['adviceNote'],
+                          style: GoogleFonts.notoSansTamil(fontSize: 14, color: Colors.amber.shade900),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                if (status == 'picked') ...[
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => FeedbackScreen(
+                              orderId: orderId,
+                              items: items,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.rate_review_outlined, color: Colors.white),
+                      label: Text(
+                        LocalizationService.isTamil ? 'கருத்துக்களைப் பகிரவும்' : 'Give Feedback',
+                        style: GoogleFonts.notoSansTamil(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.amber.shade700,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           );
@@ -348,4 +423,273 @@ class _TimelineRow extends StatelessWidget {
   String _formatDate(DateTime dt) {
      return "${dt.day}/${dt.month}/${dt.year}";
   }
+}
+
+Widget _buildFarmerDosageSection(BuildContext context, String orderId, Map<String, dynamic> data) {
+  final status = data['dosageAdviceStatus'] as String? ?? 'requested';
+  final advice = data['dosageAdvice'] as String? ?? '';
+  final recommended = (data['recommendedProducts'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
+  final createdTs = data['createdAt'] as Timestamp?;
+  final isTa = LocalizationService.isTamil;
+  
+  bool canSendReminder = false;
+  if (status == 'requested' && createdTs != null) {
+    final diff = DateTime.now().difference(createdTs.toDate());
+    if (diff.inHours >= 1) {
+      canSendReminder = true;
+    }
+  }
+
+  return Container(
+    width: double.infinity,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: Colors.green.shade100),
+    ),
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.medical_services, color: Colors.green),
+            const SizedBox(width: 8),
+            Text(
+              isTa ? 'அளவு ஆலோசனை' : 'Dosage Advice',
+              style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, color: Colors.green.shade800),
+            ),
+          ],
+        ),
+        const Divider(height: 24),
+        if (status == 'requested') ...[
+          Text(
+            isTa ? 'ஆசிரியர் ஆலோசனையை வழங்க காத்திருக்கிறது...' : 'Waiting for owner to provide advice...',
+            style: GoogleFonts.notoSansTamil(fontSize: 13, color: Colors.orange.shade800),
+          ),
+          if (canSendReminder) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _sendReminder(orderId),
+                icon: const Icon(Icons.notifications_active, size: 18),
+                label: Text(isTa ? 'நினைவூட்டலை அனுப்பு' : 'Send Reminder'),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+              ),
+            ),
+          ],
+        ] else ...[
+          Text(isTa ? 'ஆசிரியரின் ஆலோசனை:' : 'Owner\'s Advice:', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+          Text(advice, style: GoogleFonts.notoSansTamil(fontSize: 14)),
+          if (recommended.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(isTa ? 'பரிந்துரைக்கப்பட்ட பொருட்கள்:' : 'Recommended Products:', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            const SizedBox(height: 8),
+            for (final p in recommended)
+              Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  title: Text(isTa ? (p['name_ta'] ?? p['name_en']) : (p['name_en'] ?? p['name_ta'])),
+                  subtitle: Text('₹${p['price']}'),
+                  trailing: TextButton(
+                    onPressed: () => _addItemToOrder(orderId, p),
+                    child: Text(isTa ? 'சேர்' : 'Add'),
+                  ),
+                ),
+              ),
+          ],
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => _finaliseOrder(orderId),
+              child: Text(isTa ? 'தொடரவும்' : 'Continue with Selection'),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: Row(
+              children: [
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('feedbacks')
+                        .where('isAdviceFeedback', isEqualTo: true)
+                        .where('diseaseName', isEqualTo: data['diseaseDetails'])
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      final count = snapshot.data?.docs.length ?? 0;
+                      final worked = snapshot.data?.docs.where((d) => (d.data() as Map)['adviceEffectiveness'] == 'worked').length ?? 0;
+                      final percent = count > 0 ? (worked / count * 100).toInt() : 0;
+                      
+                      return OutlinedButton.icon(
+                        onPressed: count > 0 ? () => _showExpertReviews(context, data['diseaseDetails'], isTa) : null,
+                        icon: const Icon(Icons.analytics_outlined, size: 18),
+                        label: Text(count > 0 ? '$percent% ${isTa ? 'வெற்றி' : 'Success'} ($count)' : (isTa ? 'மதிப்பீடுகள் இல்லை' : 'No Reviews')),
+                      );
+                    }
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => FeedbackScreen(
+                        orderId: orderId,
+                        items: recommended,
+                        isAdviceFeedback: true,
+                        diseaseName: data['diseaseDetails'],
+                      )));
+                    },
+                    icon: const Icon(Icons.rate_review, size: 18),
+                    label: Text(isTa ? 'மதிப்பிடு' : 'Rate Help'),
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
+void _showExpertReviews(BuildContext context, String diseaseName, bool isTa) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+    builder: (ctx) => Container(
+      height: MediaQuery.of(ctx).size.height * 0.7,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isTa ? 'மற்ற விவசாயிகளின் முடிவுகள்' : 'Other Farmers\' Results',
+            style: GoogleFonts.notoSansTamil(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: FirebaseFirestore.instance
+                  .collection('feedbacks')
+                  .where('isAdviceFeedback', isEqualTo: true)
+                  .where('diseaseName', isEqualTo: diseaseName)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                final docs = snapshot.data!.docs;
+                return ListView.separated(
+                  itemCount: docs.length,
+                  separatorBuilder: (_, __) => const Divider(),
+                  itemBuilder: (ctx, i) {
+                    final fb = docs[i].data();
+                    final worked = fb['adviceEffectiveness'] == 'worked';
+                    final ownerReply = fb['ownerReply'] as String?;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: worked ? Colors.green.shade50 : Colors.red.shade50,
+                            child: Icon(worked ? Icons.check : Icons.close, color: worked ? Colors.green : Colors.red, size: 16),
+                          ),
+                          title: Text(fb['userName'] ?? 'Farmer', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(fb['comment'] ?? '', style: const TextStyle(fontSize: 12)),
+                              if (fb['imageUrl'] != null) ...[
+                                const SizedBox(height: 8),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: CommonImage(imageUrl: fb['imageUrl'], height: 100, width: 150, fit: BoxFit.cover),
+                                ),
+                              ],
+                            ],
+                          ),
+                          trailing: Text(
+                             fb['createdAt'] != null ? "${(fb['createdAt'] as Timestamp).toDate().day}/${(fb['createdAt'] as Timestamp).toDate().month}" : '',
+                             style: const TextStyle(fontSize: 10, color: Colors.grey),
+                          ),
+                        ),
+                        if (ownerReply != null)
+                          Container(
+                            margin: const EdgeInsets.only(left: 56, right: 16, bottom: 8),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(8)),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(isTa ? 'ஆசிரியர் பதில்:' : 'Owner Reply:', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Colors.blue)),
+                                Text(ownerReply, style: const TextStyle(fontSize: 11)),
+                              ],
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Future<void> _sendReminder(String orderId) async {
+  try {
+    await NotificationRepository().notifyOwner(
+      titleTa: 'அளவு ஆலோசனை நினைவூட்டல்',
+      titleEn: 'Dosage Advice Reminder',
+      bodyTa: 'ஆர்டர் #$orderId-க்கு விவசாயி இன்னும் ஆலோசனைக்காகக் காத்திருக்கிறார்.',
+      bodyEn: 'Farmer is still waiting for dosage advice for Order #$orderId.',
+      data: {'orderId': orderId, 'type': 'dosageReminder'},
+    );
+  } catch (e) {
+    print('Reminder error: $e');
+  }
+}
+
+Future<void> _addItemToOrder(String orderId, Map<String, dynamic> product) async {
+  final orderRef = FirebaseFirestore.instance.collection('orders').doc(orderId);
+  await FirebaseFirestore.instance.runTransaction((transaction) async {
+    final doc = await transaction.get(orderRef);
+    final items = List<Map<String, dynamic>>.from(doc.data()?['items'] ?? []);
+    final total = (doc.data()?['totalAmount'] as num? ?? 0).toDouble();
+    
+    items.add({
+      'productId': product['id'],
+      'name_ta': product['name_ta'],
+      'name_en': product['name_en'],
+      'price': product['price'],
+      'quantity': 1,
+      'unit_ta': product['unit_ta'],
+      'unit_en': product['unit_en'],
+    });
+
+    final newTotal = total + (product['price'] as num? ?? 0);
+    
+    // Remove from recommended
+    final recommended = List<Map<String, dynamic>>.from(doc.data()?['recommendedProducts'] ?? []);
+    recommended.removeWhere((p) => p['id'] == product['id']);
+
+    transaction.update(orderRef, {
+      'items': items,
+      'totalAmount': newTotal,
+      'recommendedProducts': recommended,
+    });
+  });
+}
+
+Future<void> _finaliseOrder(String orderId) async {
+  await FirebaseFirestore.instance.collection('orders').doc(orderId).update({
+    'dosageAdviceStatus': 'finalised',
+  });
 }

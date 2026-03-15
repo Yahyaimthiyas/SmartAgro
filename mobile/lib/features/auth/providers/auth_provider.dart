@@ -11,6 +11,7 @@ const bool kUseDevTestNumberRoles = true;
 // Store phone numbers in E.164 format (with +91 prefix).
 const Set<String> kDevOwnerPhones = {
   '+918637617441', // main owner test number
+  '+919842237543', // updated owner number
 };
 
 class AuthProvider with ChangeNotifier {
@@ -53,6 +54,13 @@ class AuthProvider with ChangeNotifier {
     }
 
     try {
+      // [DEV BYPASS] If it's a dev number, bypass real Firebase SMS to avoid billing/quota errors
+      if (kUseDevTestNumberRoles && kDevOwnerPhones.contains('+91$phone')) {
+        _verificationId = "dev_bypass_id";
+        codeSent(_verificationId!);
+        return;
+      }
+
       await _auth!.verifyPhoneNumber(
         phoneNumber: '+91$phone',
         verificationCompleted: (PhoneAuthCredential credential) async {
@@ -83,6 +91,19 @@ class AuthProvider with ChangeNotifier {
         return false;
       }
       
+      // [DEV BYPASS] check for mock OTP
+      if (_verificationId == "dev_bypass_id" && otp == "123456") {
+         if (_auth != null) {
+           final userCredential = await _auth!.signInAnonymously();
+           if (userCredential.user != null) {
+              final role = await _ensureUserDocument(userCredential.user!);
+              await _saveLocalAuth(userCredential.user!.uid, role);
+              return true;
+           }
+         }
+         return false;
+      }
+
       final credential = PhoneAuthProvider.credential(
         verificationId: _verificationId!,
         smsCode: otp,
@@ -108,6 +129,20 @@ class AuthProvider with ChangeNotifier {
 
   Future<String> _ensureUserDocument(User user) async {
     try {
+      final phone = user.phoneNumber ?? (_lastPhone != null ? '+91$_lastPhone' : null);
+      
+      // [DEV BYPASS] Prioritize dev number check
+      if (kUseDevTestNumberRoles && phone != null && kDevOwnerPhones.contains(phone)) {
+         final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+         await docRef.set({
+           'phone': phone,
+           'role': 'owner',
+           'shopId': 'shop_123',
+           'updatedAt': FieldValue.serverTimestamp(),
+         }, SetOptions(merge: true));
+         return 'owner';
+      }
+
       final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
       final snapshot = await docRef.get();
       
@@ -116,37 +151,47 @@ class AuthProvider with ChangeNotifier {
         return data?['role']?.toString() ?? 'farmer';
       }
 
-      final phone = user.phoneNumber ?? (_lastPhone != null ? '+91$_lastPhone' : null);
       if (phone == null) return 'farmer';
+      final preRegQuery = await FirebaseFirestore.instance
+          .collection('users')
+          .where('phone', isEqualTo: phone)
+          .limit(1)
+          .get();
 
-      // 1. Check if this phone number is in the blessed list
-      final approvedDoc = await FirebaseFirestore.instance.collection('approved_owners').doc(phone).get();
-      final isApproved = approvedDoc.exists && approvedDoc.data()?['status'] == 'active';
-
-      // 2. Assign role based on approval
-      final role = isApproved ? 'owner' : 'farmer';
-
-      // 3. Create user document
-      await docRef.set({
+      String role = 'farmer';
+      Map<String, dynamic> userData = {
         'phone': phone,
-        'role': role,
-        'shopId': isApproved ? (approvedDoc.data()?['shopId'] ?? 'default_shop') : null,
+        'role': 'farmer',
         'createdAt': FieldValue.serverTimestamp(),
-      });
+      };
 
-      // 4. (Dev Helper) If it's the specific dev number and it wasn't there, add it for next time.
-      if (kUseDevTestNumberRoles && kDevOwnerPhones.contains(phone) && !isApproved) {
-         // Auto-approve the dev number for testing ease
-         await FirebaseFirestore.instance.collection('approved_owners').doc(phone).set({
-           'status': 'active',
-           'shopId': 'shop_123',
-           'permissions': ['full_access'],
-           'createdAt': FieldValue.serverTimestamp(),
-         });
-         // Update user to owner immediately
-         await docRef.update({'role': 'owner', 'shopId': 'shop_123'});
-         return 'owner';
+      if (preRegQuery.docs.isNotEmpty) {
+        final preRegDoc = preRegQuery.docs.first;
+        // If the document is already our current UID, we are handled above.
+        // If it's a different document (e.g. created by owner with random ID), we adopt its fields.
+        if (preRegDoc.id != user.uid) {
+           final data = preRegDoc.data();
+           role = data['role']?.toString() ?? 'farmer';
+           userData.addAll(data);
+           userData['role'] = role; // Ensure role is preserved
+           // Delete the pre-registered document to avoid duplicates
+           await preRegDoc.reference.delete();
+        } else {
+           role = preRegDoc.data()['role']?.toString() ?? 'farmer';
+           return role;
+        }
+      } else {
+        // 2. Check if this phone number is in the blessed list for owners
+        final approvedDoc = await FirebaseFirestore.instance.collection('approved_owners').doc(phone).get();
+        if (approvedDoc.exists && approvedDoc.data()?['status'] == 'active') {
+          role = 'owner';
+          userData['role'] = 'owner';
+          userData['shopId'] = approvedDoc.data()?['shopId'] ?? 'default_shop';
+        }
       }
+
+      // 3. Create/Set user document with final data
+      await docRef.set(userData, SetOptions(merge: true));
 
       return role;
     } catch (e) {
@@ -169,6 +214,8 @@ class AuthProvider with ChangeNotifier {
       return false;
     }
   }
+
+
 
   Future<void> _saveLocalAuth(String uid, String role) async {
     final prefs = await SharedPreferences.getInstance();

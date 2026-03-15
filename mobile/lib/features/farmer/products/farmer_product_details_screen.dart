@@ -7,7 +7,7 @@ import '../../../core/constants/colors.dart';
 import '../../../core/widgets/common_image.dart'; // [NEW]
 import '../../../core/services/localization_service.dart';
 import '../cart/cart_provider.dart';
-import '../dosage/dosage_calculator_screen.dart';
+import '../../../core/utils/price_utils.dart';
 
 class FarmerProductDetailsScreen extends StatefulWidget {
   final String productId;
@@ -26,7 +26,7 @@ class FarmerProductDetailsScreen extends StatefulWidget {
 class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
     with SingleTickerProviderStateMixin {
   int _quantity = 1;
-  int _selectedTabIndex = 0;
+  Map<String, dynamic>? _selectedVariant;
   
   // Cache the product data to prevent reloading on tab switches
   Map<String, dynamic>? _cachedProductData;
@@ -48,6 +48,12 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
       if (mounted) {
         setState(() {
           _cachedProductData = doc.exists ? doc.data() : null;
+          if (_cachedProductData != null) {
+            final variants = _cachedProductData!['variants'] as List<dynamic>? ?? [];
+            if (variants.isNotEmpty) {
+              _selectedVariant = variants[0] as Map<String, dynamic>;
+            }
+          }
           _isLoading = false;
         });
       }
@@ -89,10 +95,6 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
     final imageUrl = data['imageUrl'] as String?;
     final descriptionTa = data['description_ta'] as String? ?? '';
     final descriptionEn = data['description_en'] as String? ?? '';
-    final dosageTa = data['dosage_ta'] as String? ?? '';
-    final dosageEn = data['dosage_en'] as String? ?? '';
-    final safetyTa = data['safety_ta'] as String? ?? '';
-    final safetyEn = data['safety_en'] as String? ?? '';
 
     String stockLabelTa;
     String stockLabelEn;
@@ -123,23 +125,21 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
     // [NEW] Privacy: Hide exact count, just show status
     final stockDisplay = stockText; 
 
-    double finalPrice = price.toDouble();
-    bool isOfferActive = data['isOfferActive'] as bool? ?? false;
-    if (isOfferActive) {
-      final offerType = data['offerType'] as String? ?? 'percentage';
-      final offerValue = (data['offerValue'] as num? ?? 0).toDouble();
-      if (offerType == 'percentage') {
-         final discount = (price * offerValue) / 100;
-         finalPrice = price - discount;
-      } else {
-         finalPrice = offerValue;
-      }
-      if (finalPrice < 0) finalPrice = 0;
-    }
 
     final maxQty = stock > 0 ? stock : 1;
-    // Only reset quantity if it exceeds max, don't reset to 1 on rebuild if valid
     if (_quantity > maxQty) _quantity = maxQty;
+
+    final salesCount = data['salesCount'] as int? ?? 0;
+    final brand = data['brand'] as String? ?? '';
+    final technicalName = data['technicalName'] as String? ?? '';
+    final expertAdvice = data['expertAdvice'] as String? ?? '';
+    final keyFeatures = data['keyFeatures'] as List<dynamic>? ?? [];
+    final usageTable = data['usageTable'] as List<dynamic>? ?? [];
+    final variants = data['variants'] as List<dynamic>? ?? [];
+
+    final currentPrice = _selectedVariant != null ? (_selectedVariant!['price'] as num) : PriceUtils.calculateFinalPrice(data);
+    final currentMRP = _selectedVariant != null ? (_selectedVariant!['mrp'] as num) : price;
+    final currentUnit = _selectedVariant != null ? "${_selectedVariant!['size']} ${_selectedVariant!['unit']}" : displayUnit;
 
     return Stack(
       children: [
@@ -151,168 +151,101 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
               backgroundColor: Colors.white,
               elevation: 0,
               leading: IconButton(
-                 icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.textPrimary),
+                 icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
                  onPressed: () => Navigator.of(context).pop(),
                  style: IconButton.styleFrom(
-                   backgroundColor: Colors.white.withOpacity(0.8),
-                   shape: const CircleBorder(),
+                   backgroundColor: AppColors.primary.withOpacity(0.4),
+                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                  ),
               ),
               flexibleSpace: FlexibleSpaceBar(
-                background: imageUrl != null && imageUrl.isNotEmpty
-                    ? CommonImage( // [NEW] Use CommonImage
-                        imageUrl: imageUrl, // Handles Base64 & Network
-                        fit: BoxFit.cover,
-                      )
-                    : Container(
-                        color: Colors.grey[100],
-                        child: const Icon(Icons.image_outlined, size: 80, color: Colors.grey),
+                background: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    imageUrl != null && imageUrl.isNotEmpty
+                        ? CommonImage(imageUrl: imageUrl, fit: BoxFit.cover)
+                        : Container(
+                            color: Colors.grey[100],
+                            child: const Icon(Icons.image_outlined, size: 80, color: Colors.grey),
+                          ),
+                    if (salesCount >= 10)
+                      Positioned(
+                        top: 100,
+                        right: 20,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade700,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.local_fire_department, color: Colors.white, size: 16),
+                              const SizedBox(width: 4),
+                              Text(
+                                isTa ? 'அதிக விற்பனை' : 'Hot Selling',
+                                style: GoogleFonts.poppins(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
+                  ],
+                ),
               ),
             ),
             SliverToBoxAdapter(
               child: Container(
-                padding: const EdgeInsets.all(24),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF8F9FA),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-                ),
-                transform: Matrix4.translationValues(0, -20, 0),
+                color: Colors.white,
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            displayName,
-                            style: isTa
-                                ? GoogleFonts.notoSansTamil(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textPrimary,
-                                  )
-                                : GoogleFonts.poppins(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textPrimary,
-                                  ),
-                          ),
+                    if (brand.isNotEmpty)
+                      Text(
+                        brand.toUpperCase(),
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primary,
+                          letterSpacing: 1.5,
                         ),
-                      ],
-                    ),
+                      ),
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: stockBgColor,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            stockDisplay, // Privacy update
-                            style: isTa
-                                ? GoogleFonts.notoSansTamil(
-                                    fontSize: 12,
-                                    color: stockColor,
-                                    fontWeight: FontWeight.bold,
-                                  )
-                                : GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    color: stockColor,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                          ),
-                        ),
-                        const Spacer(),
-                        
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            if (isOfferActive)
-                              Text(
-                                '₹$price',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  decoration: TextDecoration.lineThrough,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            Text(
-                              '₹${finalPrice.toStringAsFixed(0)}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                                color: isOfferActive ? Colors.green.shade700 : AppColors.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '/ $displayUnit',
-                          style: isTa
-                              ? GoogleFonts.notoSansTamil(
-                                  fontSize: 16,
-                                  color: AppColors.textSecondary,
-                                )
-                              : GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  color: AppColors.textSecondary,
-                                ),
-                        ),
-                      ],
+                    Text(
+                      displayName,
+                      style: GoogleFonts.outfit(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                        height: 1.2,
+                      ),
                     ),
+                    const SizedBox(height: 16),
+                    _buildRatingAndStock(data, isTa, stockDisplay, stockColor, stockBgColor),
                     const SizedBox(height: 24),
-                    
+                    _buildPricingSection(currentPrice, currentMRP, isTa),
+                    const SizedBox(height: 16),
+                    if (variants.isNotEmpty) _buildVariantSelector(variants, isTa),
+                    const SizedBox(height: 24),
+                    _buildSocialProofing(data, isTa),
                     const SizedBox(height: 32),
-                    
-                    // [MODERNIZED] Custom Animated Tab Bar
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        children: [
-                          _buildTabItem(0, LocalizationService.tr('tab_description')),
-                          _buildTabItem(1, LocalizationService.tr('tab_dosage')),
-                          _buildTabItem(2, LocalizationService.tr('tab_safety')),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // [DYNAMIC CONTENT] No fixed height - INSTANT SWITCHING
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      switchInCurve: Curves.easeInOut,
-                      switchOutCurve: Curves.easeInOut,
-                      transitionBuilder: (Widget child, Animation<double> animation) {
-                        return FadeTransition(
-                          opacity: animation,
-                          child: child,
-                        );
-                      },
-                      child: KeyedSubtree(
-                        key: ValueKey<int>(_selectedTabIndex),
-                        child: _buildTabContent(
-                          descriptionTa: descriptionTa,
-                          descriptionEn: descriptionEn,
-                          dosageTa: dosageTa,
-                          dosageEn: dosageEn,
-                          safetyTa: safetyTa,
-                          safetyEn: safetyEn,
-                          isTa: isTa,
-                        ),
-                      ),
-                    ),
-                     // Padding for bottom bar
-                     const SizedBox(height: 100),
+                    _buildInfoTable(data, isTa),
+                    const SizedBox(height: 32),
+                    if (technicalName.isNotEmpty) _buildCheaperAlternatives(technicalName, currentPrice, isTa),
+                    const SizedBox(height: 32),
+                    _buildDescription(isTa ? descriptionTa : descriptionEn, isTa),
+                    const SizedBox(height: 32),
+                    _buildReviewsSection(widget.productId, isTa),
+                    const SizedBox(height: 32),
+                    if (keyFeatures.isNotEmpty) _buildKeyFeaturesSection(keyFeatures, isTa),
+                    const SizedBox(height: 32),
+                    if (usageTable.isNotEmpty) _buildUsageTable(usageTable, isTa),
+                    const SizedBox(height: 32),
+                    if (expertAdvice.isNotEmpty) _buildExpertAdviceSection(expertAdvice, isTa),
+                    const SizedBox(height: 100),
                   ],
                 ),
               ),
@@ -325,16 +258,16 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
            left: 0, 
            right: 0, 
            bottom: 0,
-           child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
                 boxShadow: [
                    BoxShadow(
-                     color: Colors.black.withOpacity(0.08),
-                     blurRadius: 20,
-                     offset: const Offset(0, -4),
+                     color: Colors.black.withOpacity(0.12),
+                     blurRadius: 30,
+                     offset: const Offset(0, -10),
                    ),
                 ],
               ),
@@ -392,9 +325,9 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
                                          productId: widget.productId,
                                          nameTa: nameTa,
                                          nameEn: nameEn,
-                                         price: finalPrice,
-                                         unitTa: unitTa,
-                                         unitEn: unitEn,
+                                          price: currentPrice.toDouble(),
+                                          unitTa: currentUnit,
+                                          unitEn: currentUnit,
                                          imageUrl: imageUrl,
                                          quantity: _quantity,
                                        );
@@ -437,121 +370,412 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
     );
   }
 
-  Widget _buildInfoText(String ta, String en, bool isTa) {
-    final text = LocalizationService.pickTaEn(ta, en);
-    if (text.isEmpty) {
-      return Center(
-        child: Text(
-          LocalizationService.tr('msg_info_coming_soon'),
-          style: GoogleFonts.poppins(color: AppColors.textSecondary),
+
+  Widget _buildRatingAndStock(Map<String, dynamic> data, bool isTa, String stockDisplay, Color stockColor, Color stockBgColor) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('feedbacks')
+          .where('productId', isEqualTo: widget.productId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        double avgRating = 0.0;
+        int reviewCount = 0;
+        
+        if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+           reviewCount = snapshot.data!.docs.length;
+           double total = 0;
+           for (var doc in snapshot.data!.docs) {
+              total += (doc.data()['rating'] as num? ?? 0).toDouble();
+           }
+           avgRating = total / reviewCount;
+        }
+
+        return Row(
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.star, color: Colors.amber, size: 20),
+                const SizedBox(width: 4),
+                Text(
+                  reviewCount > 0 ? avgRating.toStringAsFixed(1) : '0.0', 
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '($reviewCount ${isTa ? "மதிப்பீடுகள்" : "Reviews"})', 
+                  style: GoogleFonts.poppins(color: Colors.grey, fontSize: 13)
+                ),
+              ],
+            ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(color: stockBgColor, borderRadius: BorderRadius.circular(8)),
+              child: Text(stockDisplay, style: GoogleFonts.notoSansTamil(fontSize: 12, fontWeight: FontWeight.bold, color: stockColor)),
+            ),
+          ],
+        );
+      }
+    );
+  }
+
+  Widget _buildPricingSection(num currentPrice, num currentMRP, bool isTa) {
+    final savings = currentMRP - currentPrice;
+    final offPercent = currentMRP > 0 ? ((savings / currentMRP) * 100).toInt() : 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text('₹${currentPrice.toStringAsFixed(0)}', style: GoogleFonts.poppins(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.primary)),
+            const SizedBox(width: 12),
+            Text('₹${currentMRP.toStringAsFixed(0)}', style: GoogleFonts.poppins(fontSize: 18, decoration: TextDecoration.lineThrough, color: Colors.grey)),
+            const SizedBox(width: 12),
+            if (offPercent > 0)
+              Text('$offPercent% OFF', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red)),
+          ],
         ),
-      );
-    }
+        if (savings > 0)
+          Text('Save ₹${savings.toStringAsFixed(0)}', style: GoogleFonts.poppins(color: Colors.green.shade700, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        Text('Inclusive of all taxes', style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12)),
+      ],
+    );
+  }
+
+  Widget _buildVariantSelector(List<dynamic> variants, bool isTa) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(isTa ? 'அளவு:' : 'Size:', style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 100,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: variants.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final v = variants[index] as Map<String, dynamic>;
+              final isSelected = _selectedVariant == v;
+              return InkWell(
+                onTap: () => setState(() => _selectedVariant = v),
+                child: Container(
+                  width: 120,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: isSelected ? AppColors.primary : Colors.grey.shade300, width: isSelected ? 2 : 1),
+                    color: isSelected ? AppColors.primary.withOpacity(0.05) : Colors.white,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text("${v['size']} ${v['unit']}", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14)),
+                      const SizedBox(height: 4),
+                      Text("₹${v['price']}", style: GoogleFonts.poppins(fontSize: 14, color: AppColors.primary)),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSocialProofing(Map<String, dynamic> data, bool isTa) {
+    final salesCount = data['salesCount'] as int? ?? 0;
+    if (salesCount < 5) return const SizedBox();
+    
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-      child: Text(
-        text,
-        style: isTa 
-           ? GoogleFonts.notoSansTamil(fontSize: 14, height: 1.6, color: AppColors.textPrimary)
-           : GoogleFonts.poppins(fontSize: 14, height: 1.6, color: AppColors.textPrimary),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(16)),
+      child: Row(
+        children: [
+          const Icon(Icons.flash_on, color: Colors.amber),
+          const SizedBox(width: 12),
+          Expanded(child: Text(isTa ? '$salesCount+ விவசாயிகள் இதனை வாங்கியுள்ளனர்' : '$salesCount+ farmers bought this recently', style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.w600))),
+        ],
       ),
     );
   }
 
-  Widget _buildDosageTab(String ta, String en, bool isTa) {
-     return Column(
-       children: [
-         _buildInfoText(ta, en, isTa),
-         const SizedBox(height: 12),
-         SizedBox(
-           width: double.infinity,
-           height: 48,
-           child: OutlinedButton(
-             onPressed: () {
-               Navigator.of(context).push(
-                 MaterialPageRoute(
-                   builder: (_) => DosageCalculatorScreen(
-                     productId: widget.productId,
-                     cropId: widget.cropId,
-                   ),
-                 ),
-               );
-             },
-             style: OutlinedButton.styleFrom(
-               side: const BorderSide(color: AppColors.primary),
-               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-             ),
-             child: Text(
-               LocalizationService.tr('dosage_calc_btn_for_my_land'),
-               style: GoogleFonts.notoSansTamil(
-                 fontSize: 14,
-                 fontWeight: FontWeight.bold,
-                 color: AppColors.primary,
-               ),
-             ),
-           ),
-         ),
-       ],
-     );
+  Widget _buildInfoTable(Map<String, dynamic> data, bool isTa) {
+    final rows = [
+      {'label': 'Brand', 'value': data['brand'] ?? '-'},
+      {'label': 'Category', 'value': data['categoryId'] ?? '-'},
+      {'label': 'Technical', 'value': data['technicalName'] ?? '-'},
+      {'label': 'Classification', 'value': data['classification'] ?? '-'},
+      {'label': 'Toxicity', 'value': data['toxicity'] ?? '-'},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Overview', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18)),
+        const SizedBox(height: 16),
+        Table(
+          border: TableBorder.all(color: Colors.grey.shade200),
+          children: rows.map((r) => TableRow(
+            children: [
+              Padding(padding: const EdgeInsets.all(12), child: Text(r['label']!, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.blueGrey))),
+              Padding(padding: const EdgeInsets.all(12), child: Text(r['value']!.toString(), style: GoogleFonts.poppins())),
+            ],
+          )).toList(),
+        ),
+      ],
+    );
   }
 
-  Widget _buildTabItem(int index, String title) {
-    final isSelected = _selectedTabIndex == index;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _selectedTabIndex = index),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    )
-                  ]
-                : [],
+  Widget _buildCheaperAlternatives(String technicalName, num currentPrice, bool isTa) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('products')
+          .where('technicalName', isEqualTo: technicalName)
+          .where('price', isLessThan: currentPrice)
+          .limit(3)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const SizedBox();
+        final alternatives = snapshot.data!.docs;
+        
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(isTa ? 'அதே தரம், குறைந்த விலை!' : 'Same Chemical, Get Same Result', style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.orange.shade800)),
+            const SizedBox(height: 16),
+            ...alternatives.map((alt) {
+              final altData = alt.data();
+              final altPrice = PriceUtils.calculateFinalPrice(altData);
+              final savingPer = (((currentPrice - altPrice) / currentPrice) * 100).toInt();
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: ListTile(
+                  leading: CommonImage(imageUrl: altData['imageUrl'], width: 60, height: 60),
+                  title: Text(LocalizationService.pickTaEn(altData['name_ta'], altData['name_en'])),
+                  subtitle: Text("Save $savingPer% Cheaper", style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                  trailing: Text("₹${altPrice.toStringAsFixed(0)}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                  onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FarmerProductDetailsScreen(productId: alt.id))),
+                ),
+              );
+            }).toList(),
+          ],
+        );
+      }
+    );
+  }
+
+  Widget _buildDescription(String desc, bool isTa) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(isTa ? 'விளக்கம்' : 'Product Description', style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, fontSize: 18)),
+        const SizedBox(height: 12),
+        Text(desc, style: GoogleFonts.poppins(height: 1.6, color: Colors.black87)),
+      ],
+    );
+  }
+
+  Widget _buildKeyFeaturesSection(List<dynamic> features, bool isTa) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+        Text(isTa ? 'சிறப்பம்சங்கள்' : 'Key Features', style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, fontSize: 18)),
+        const SizedBox(height: 12),
+        ...features.map((f) => Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.check_circle_outline, color: Colors.green, size: 20),
+              const SizedBox(width: 12),
+              Expanded(child: Text(f.toString(), style: GoogleFonts.poppins())),
+            ],
           ),
-          alignment: Alignment.center,
-          child: Text(
-            title,
-            style: isSelected
-                ? GoogleFonts.notoSansTamil(
-                    fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primary)
-                : GoogleFonts.notoSansTamil(
-                    fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade600),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+        )).toList(),
+      ],
+    );
+  }
+
+  Widget _buildUsageTable(List<dynamic> usage, bool isTa) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(isTa ? 'பயன்படுத்தும் முறை' : 'Usage and Crops', style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, fontSize: 18)),
+        const SizedBox(height: 16),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Table(
+            border: TableBorder.all(color: Colors.grey.shade200),
+            defaultColumnWidth: const IntrinsicColumnWidth(),
+            children: [
+              TableRow(
+                decoration: BoxDecoration(color: Colors.grey.shade100),
+                children: [
+                  _headerCell('Crops'), _headerCell('Target Pest'), _headerCell('Dosage/Acre'), _headerCell('Waiting'),
+                ],
+              ),
+              ...usage.map((u) {
+                final m = u as Map<String, dynamic>;
+                return TableRow(
+                  children: [
+                    _cell(m['crop'] ?? '-'), _cell(m['pest'] ?? '-'), _cell(m['dosageAcre'] ?? '-'), _cell(m['waiting'] ?? '-'),
+                  ],
+                );
+              }).toList(),
+            ],
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _headerCell(String t) => Padding(padding: const EdgeInsets.all(12), child: Text(t, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 12)));
+  Widget _cell(String t) => Padding(padding: const EdgeInsets.all(12), child: Text(t.toString(), style: GoogleFonts.poppins(fontSize: 12)));
+
+  Widget _buildExpertAdviceSection(String advice, bool isTa) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.blue.shade100)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+               const CircleAvatar(backgroundColor: Colors.blue, child: Icon(Icons.person, color: Colors.white)),
+               const SizedBox(width: 12),
+               Text(isTa ? 'நிபுணர் ஆலோசனை' : 'Expert Advice', style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, color: Colors.blue.shade900)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text('"$advice"', style: GoogleFonts.poppins(fontStyle: FontStyle.italic, color: Colors.blueGrey.shade800)),
+        ],
       ),
     );
   }
 
-  Widget _buildTabContent({
-    required String descriptionTa,
-    required String descriptionEn,
-    required String dosageTa,
-    required String dosageEn,
-    required String safetyTa,
-    required String safetyEn,
-    required bool isTa,
-  }) {
-    switch (_selectedTabIndex) {
-      case 0:
-        return _buildInfoText(descriptionTa, descriptionEn, isTa);
-      case 1:
-        return _buildDosageTab(dosageTa, dosageEn, isTa);
-      case 2:
-        return _buildInfoText(safetyTa, safetyEn, isTa);
-      default:
-        return const SizedBox.shrink();
-    }
+  Widget _buildReviewsSection(String productId, bool isTa) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          isTa ? 'வாடிக்கையாளர் மதிப்பீடுகள்' : 'Customer Reviews', 
+          style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, fontSize: 18)
+        ),
+        const SizedBox(height: 16),
+        StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance
+              .collection('feedbacks')
+              .where('productId', isEqualTo: productId)
+              .orderBy('createdAt', descending: true)
+              .limit(5)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Center(
+                  child: Text(
+                    isTa ? 'மதிப்பீடுகள் எதுவும் இல்லை' : 'No original reviews yet.',
+                    style: GoogleFonts.poppins(color: Colors.grey, fontSize: 14),
+                  ),
+                ),
+              );
+            }
+
+            return Column(
+              children: snapshot.data!.docs.map((doc) {
+                final fb = doc.data();
+                final rating = fb['rating'] as int? ?? 5;
+                final comment = fb['comment'] as String? ?? '';
+                final userName = fb['userName'] as String? ?? 'Farmer';
+                final imageUrl = fb['imageUrl'] as String?;
+                final ownerReply = fb['ownerReply'] as String?;
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey.shade100),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 14,
+                                backgroundColor: AppColors.primary.withOpacity(0.1),
+                                child: Text(userName.substring(0, 1).toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(userName, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13)),
+                            ],
+                          ),
+                          Row(
+                            children: List.generate(5, (index) => Icon(
+                              index < rating ? Icons.star : Icons.star_border,
+                              color: Colors.amber,
+                              size: 14,
+                            )),
+                          ),
+                        ],
+                      ),
+                      if (comment.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Text(comment, style: GoogleFonts.poppins(fontSize: 13, color: Colors.black87)),
+                      ],
+                      if (imageUrl != null) ...[
+                        const SizedBox(height: 10),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: CommonImage(imageUrl: imageUrl, height: 120, width: double.infinity, fit: BoxFit.cover),
+                        ),
+                      ],
+                      if (ownerReply != null) ...[
+                         const SizedBox(height: 12),
+                         Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(12)),
+                            child: Column(
+                               crossAxisAlignment: CrossAxisAlignment.start,
+                               children: [
+                                  Text(isTa ? 'ஆசிரியர் பதில்:' : 'Owner Reply:', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.blue)),
+                                  const SizedBox(height: 4),
+                                  Text(ownerReply, style: const TextStyle(fontSize: 12, color: Colors.black87)),
+                               ],
+                            ),
+                         ),
+                      ],
+                    ],
+                  ),
+                );
+              }).toList(),
+            );
+          },
+        ),
+      ],
+    );
   }
 
   Widget _qtyButton({required IconData icon, required VoidCallback onTap}) {

@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/services/localization_service.dart';
 import 'owner_order_details_screen.dart';
+import '../../notifications/repositories/notification_repository.dart';
+import '../../notifications/models/app_notification.dart';
 
 class OwnerOrdersScreen extends StatefulWidget {
   const OwnerOrdersScreen({super.key});
@@ -13,301 +15,314 @@ class OwnerOrdersScreen extends StatefulWidget {
   State<OwnerOrdersScreen> createState() => _OwnerOrdersScreenState();
 }
 
-class _OwnerOrdersScreenState extends State<OwnerOrdersScreen> {
-  String _filter = 'all'; // all, reserved, ready, picked, cancelled
+class _OwnerOrdersScreenState extends State<OwnerOrdersScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  String _statusFilter = 'all'; 
+  String _searchQuery = '';
+  String _paymentFilter = 'all'; 
+  String _orderSourceFilter = 'all'; // all, online, offline
+  bool _adviceOnly = false;
+  bool _showFilters = false;
+
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _checkCreditExpiries();
+  }
+
+  Future<void> _checkCreditExpiries() async {
+    final now = DateTime.now();
+    final snap = await FirebaseFirestore.instance
+        .collection('orders')
+        .where('paymentMethod', isEqualTo: 'credit')
+        .where('status', isEqualTo: 'picked')
+        .get();
+
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      final expiry = (data['creditExpiryDate'] as Timestamp?)?.toDate();
+      if (expiry != null) {
+        final daysLeft = expiry.difference(now).inDays;
+        if (daysLeft <= 3 && daysLeft >= 0) {
+           // Notify once per session or use a flag in doc to avoid spam
+           NotificationRepository().notifyOwner(
+             titleTa: 'கடன் காலக்கெடு முடிகிறது',
+             titleEn: 'Credit Expiring Soon',
+             bodyTa: 'ஆர்டர் #${doc.id.substring(0,8)} காலாவதியாக இன்னும் $daysLeft நாட்கள் உள்ளன.',
+             bodyEn: 'Order #${doc.id.substring(0,8)} expires in $daysLeft days.',
+           );
+        } else if (daysLeft < 0) {
+           NotificationRepository().notifyOwner(
+             titleTa: 'கடன் காலாவதியானது!',
+             titleEn: 'Credit Expired!',
+             bodyTa: 'ஆர்டர் #${doc.id.substring(0,8)} காலக்கெடு முடிந்தது.',
+             bodyEn: 'Order #${doc.id.substring(0,8)} has expired.',
+           );
+        }
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: const Color(0xFFF4F7F6),
       appBar: AppBar(
+        title: Text(
+          LocalizationService.tr('owner_orders_title'),
+          style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
-        centerTitle: true,
-        title: Text(
-          LocalizationService.tr('owner_title_orders'),
-          style: GoogleFonts.notoSansTamil(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(100),
+          child: Column(
+            children: [
+              TabBar(
+                controller: _tabController,
+                indicatorColor: AppColors.primary,
+                labelColor: AppColors.primary,
+                unselectedLabelColor: Colors.grey,
+                tabs: [
+                  Tab(text: LocalizationService.isTamil ? 'நடப்பு' : 'Active'),
+                  Tab(text: LocalizationService.isTamil ? 'வரலாறு' : 'History'),
+                ],
+              ),
+              _buildFilterBar(),
+            ],
           ),
         ),
       ),
-      body: Column(
+      body: TabBarView(
+        controller: _tabController,
         children: [
-          Container(
-             color: Colors.white,
-             padding: const EdgeInsets.symmetric(vertical: 12),
-             child: _buildFilters(),
-          ),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: FirebaseFirestore.instance
-                  .collection('orders')
-                  .orderBy('createdAt', descending: true)
-                  .limit(50)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                final docs = snapshot.data?.docs ?? [];
-                final filtered = docs.where((doc) {
-                  final data = doc.data();
-                  final status = data['status'] as String? ?? 'reserved';
-                  if (_filter == 'all') return true;
-                  return status == _filter;
-                }).toList();
-
-                if (filtered.isEmpty) {
-                  return Center(
-                    child: Column(
-                       mainAxisAlignment: MainAxisAlignment.center,
-                       children: [
-                          Container(
-                             padding: const EdgeInsets.all(24),
-                             decoration: BoxDecoration(
-                                color: Colors.blue.withOpacity(0.05),
-                                shape: BoxShape.circle
-                             ),
-                             child: const Icon(Icons.receipt_long_outlined, size: 48, color: Colors.blueGrey),
-                          ),
-                          const SizedBox(height: 24),
-                          Text(
-                            LocalizationService.tr('owner_orders_empty'),
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.notoSansTamil(
-                              fontSize: 16,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                       ],
-                    ),
-                  );
-                }
-
-                return ListView.separated(
-                  padding: const EdgeInsets.all(20),
-                  itemCount: filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 16),
-                  itemBuilder: (context, index) {
-                    final doc = filtered[index];
-                    final data = doc.data();
-                    final id = doc.id;
-                    final status = data['status'] as String? ?? 'reserved';
-                    final total = data['totalAmount'] as num? ?? 0;
-                    final payment = data['paymentMethod'] as String? ?? 'cash';
-                    final ts = data['createdAt'] as Timestamp?;
-                    final created = ts?.toDate();
-                    final userId = data['userId'] as String?;
-
-                    final statusMeta = _statusMeta(status);
-
-                    return InkWell(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => OwnerOrderDetailsScreen(orderId: id),
-                          ),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                             BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4)
-                             )
-                          ]
-                        ),
-                        child: Column(
-                          children: [
-                             // Header
-                             Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Row(
-                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                   children: [
-                                      Container(
-                                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                         decoration: BoxDecoration(
-                                            color: AppColors.primary.withOpacity(0.08),
-                                            borderRadius: BorderRadius.circular(8)
-                                         ),
-                                         child: Text(
-                                            '#${id.substring(0, 8).toUpperCase()}',
-                                            style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryDark),
-                                         ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          color: statusMeta.color.withOpacity(0.1),
-                                          borderRadius: BorderRadius.circular(20),
-                                        ),
-                                        child: Row(
-                                           children: [
-                                              Icon(Icons.circle, size: 8, color: statusMeta.color),
-                                              const SizedBox(width: 6),
-                                              Text(
-                                                LocalizationService.tr(statusMeta.chipTextKey),
-                                                style: GoogleFonts.poppins(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: statusMeta.color,
-                                                ),
-                                              ),
-                                           ],
-                                        ),
-                                      ),
-                                   ],
-                                ),
-                             ),
-                             const Divider(height: 1),
-                             // Body
-                             Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                   children: [
-                                      _FarmerInfoText(userId: userId),
-                                      const SizedBox(height: 12),
-                                      Row(
-                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                         children: [
-                                            Column(
-                                               crossAxisAlignment: CrossAxisAlignment.start,
-                                               children: [
-                                                  Text(
-                                                     LocalizationService.tr('owner_dashboard_orders_revenue'),
-                                                     style: GoogleFonts.poppins(fontSize: 11, color: AppColors.textSecondary),
-                                                  ),
-                                                  Text(
-                                                     '₹${total.toStringAsFixed(0)}',
-                                                     style: GoogleFonts.notoSansTamil(
-                                                        fontSize: 18,
-                                                        fontWeight: FontWeight.bold,
-                                                        color: AppColors.textPrimary
-                                                     ),
-                                                  )
-                                               ],
-                                            ),
-                                            Column(
-                                               crossAxisAlignment: CrossAxisAlignment.end,
-                                               children: [
-                                                  Text(
-                                                     LocalizationService.tr('label_payment'),
-                                                     style: GoogleFonts.poppins(fontSize: 11, color: AppColors.textSecondary),
-                                                  ),
-                                                  Text(
-                                                     payment == 'cash'
-                                                         ? LocalizationService.tr('payment_cash')
-                                                         : LocalizationService.tr('payment_credit'),
-                                                     style: GoogleFonts.notoSansTamil(
-                                                        fontSize: 14,
-                                                        fontWeight: FontWeight.w600,
-                                                        color: AppColors.textPrimary
-                                                     ),
-                                                  )
-                                               ],
-                                            )
-                                         ],
-                                      ),
-                                      if (created != null) ...[
-                                         const SizedBox(height: 12),
-                                         Row(
-                                            children: [
-                                               Icon(Icons.access_time, size: 14, color: AppColors.textSecondary),
-                                               const SizedBox(width: 4),
-                                               Text(
-                                                 '${created.day}/${created.month}/${created.year} · ${created.hour.toString().padLeft(2, '0')}:${created.minute.toString().padLeft(2, '0')}',
-                                                 style: GoogleFonts.poppins(
-                                                   fontSize: 12,
-                                                   color: AppColors.textSecondary,
-                                                 ),
-                                               ),
-                                            ],
-                                         )
-                                      ]
-                                   ],
-                                ),
-                             ),
-                             // Footer Actions
-                             if (status == 'reserved' || status == 'ready') ...[
-                                const Divider(height: 1),
-                                Padding(
-                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                   child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                         _OrderActionButton(
-                                           orderId: id,
-                                           status: status,
-                                         ),
-                                      ],
-                                   ),
-                                )
-                             ]
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
+          _buildOrderList(active: true),
+          _buildOrderList(active: false),
         ],
       ),
     );
   }
 
-  Widget _buildFilters() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+  Widget _buildFilterBar() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          _buildFilterChip('all', LocalizationService.tr('owner_orders_filter_all')),
+          Expanded(child: _buildSearchBar()),
           const SizedBox(width: 8),
-          _buildFilterChip('reserved', LocalizationService.tr('owner_orders_filter_reserved')),
-          const SizedBox(width: 8),
-          _buildFilterChip('ready', LocalizationService.tr('owner_orders_filter_ready')),
-          const SizedBox(width: 8),
-          _buildFilterChip('picked', LocalizationService.tr('owner_orders_filter_picked')),
-          const SizedBox(width: 8),
-          _buildFilterChip('cancelled', LocalizationService.tr('owner_orders_filter_cancelled')),
+          IconButton(
+            onPressed: () => _showFilterBottomSheet(),
+            icon: Icon(Icons.tune, color: _hasActiveFilters() ? AppColors.primary : Colors.grey),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildFilterChip(String value, String label) {
-    final selected = _filter == value;
-    return ChoiceChip(
-      label: Text(
-        label,
-        style: GoogleFonts.notoSansTamil(
-          fontSize: 13,
-          fontWeight: selected ? FontWeight.bold : FontWeight.w500,
-          color: selected ? Colors.white : AppColors.textSecondary,
+  bool _hasActiveFilters() {
+    return _paymentFilter != 'all' || _orderSourceFilter != 'all' || _adviceOnly || _statusFilter != 'all';
+  }
+
+  void _showFilterBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) => Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                LocalizationService.isTamil ? 'வடிகட்டிகள்' : 'Filters',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              const SizedBox(height: 16),
+              _buildFilterSection(
+                LocalizationService.isTamil ? 'ஆர்டர் வகை' : 'Order Source',
+                ['all', 'online', 'offline'],
+                _orderSourceFilter,
+                (v) => setState(() { _orderSourceFilter = v; setS(() {}); }),
+              ),
+              _buildFilterSection(
+                LocalizationService.isTamil ? 'பணம் செலுத்துதல்' : 'Payment',
+                ['all', 'cash', 'credit'],
+                _paymentFilter,
+                (v) => setState(() { _paymentFilter = v; setS(() {}); }),
+              ),
+              SwitchListTile(
+                title: Text(LocalizationService.isTamil ? 'ஆலோசனை மட்டும்' : 'Advice Only'),
+                value: _adviceOnly,
+                onChanged: (v) => setState(() { _adviceOnly = v; setS(() {}); }),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                  child: Text(LocalizationService.isTamil ? 'விண்ணப்பிக்கவும்' : 'Apply'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-      selected: selected,
-      selectedColor: AppColors.primary,
-      backgroundColor: Colors.white,
-      side: selected ? BorderSide.none : BorderSide(color: Colors.grey.shade300),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      onSelected: (_) {
-        setState(() {
-          _filter = value;
-        });
+    );
+  }
+
+  Widget _buildFilterSection(String title, List<String> options, String current, Function(String) onSel) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: options.map((o) => ChoiceChip(
+            label: Text(o.toUpperCase()),
+            selected: current == o,
+            onSelected: (s) { if (s) onSel(o); },
+          )).toList(),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildOrderList({required bool active}) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('orders')
+          .orderBy('createdAt', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        
+        final docs = snapshot.data!.docs.where((doc) {
+          final data = doc.data();
+          final status = data['status'] as String? ?? 'reserved';
+          final payment = data['paymentMethod'] as String? ?? 'cash';
+          final isOnline = data['isOnline'] ?? true;
+          final needsAdvice = data['needsDosageAdvice'] == true;
+
+          // Tab split
+          bool isActive = (status == 'reserved' || status == 'ready');
+          if (active != isActive) return false;
+
+          // Filters
+          if (_paymentFilter != 'all' && payment != _paymentFilter) return false;
+          if (_orderSourceFilter != 'all') {
+            if (_orderSourceFilter == 'online' && !isOnline) return false;
+            if (_orderSourceFilter == 'offline' && isOnline) return false;
+          }
+          if (_adviceOnly && !needsAdvice) return false;
+          if (_searchQuery.isNotEmpty && !doc.id.toLowerCase().contains(_searchQuery.toLowerCase())) return false;
+
+          return true;
+        }).toList();
+
+        if (docs.isEmpty) return _buildEmptyState();
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: docs.length,
+          itemBuilder: (ctx, i) => _buildOrderCard(docs[i]),
+        );
       },
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(child: Text(LocalizationService.tr('owner_orders_empty')));
+  }
+
+  Widget _buildOrderCard(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final status = data['status'] as String;
+    final total = data['totalAmount'] as num;
+    final payment = data['paymentMethod'] as String;
+    final isOnline = data['isOnline'] ?? true;
+    final expiry = (data['creditExpiryDate'] as Timestamp?)?.toDate();
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ListTile(
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => OwnerOrderDetailsScreen(orderId: doc.id))),
+        title: Row(
+          children: [
+            Text('#${doc.id.substring(0, 8).toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(width: 8),
+            if (!isOnline) Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(4)),
+              child: const Text('SHOP', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('₹$total · ${payment.toUpperCase()}'),
+            if (payment == 'credit' && expiry != null)
+              Text(
+                '${LocalizationService.isTamil ? 'காலாவதி' : 'Expires'}: ${expiry.day}/${expiry.month}/${expiry.year}',
+                style: TextStyle(color: Colors.red.shade700, fontSize: 11, fontWeight: FontWeight.bold),
+              ),
+          ],
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(color: _statusMeta(status).color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+          child: Text(LocalizationService.tr(_statusMeta(status).chipTextKey), style: TextStyle(color: _statusMeta(status).color, fontSize: 11, fontWeight: FontWeight.bold)),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (val) {
+          setState(() {
+            _searchQuery = val;
+          });
+        },
+        decoration: InputDecoration(
+          hintText: LocalizationService.tr('owner_orders_search_hint'),
+          hintStyle: GoogleFonts.notoSansTamil(fontSize: 13, color: Colors.grey),
+          prefixIcon: const Icon(Icons.search, size: 20, color: Colors.grey),
+          suffixIcon: _searchQuery.isNotEmpty 
+            ? IconButton(
+                icon: const Icon(Icons.clear, size: 18), 
+                onPressed: () {
+                  _searchController.clear();
+                  setState(() => _searchQuery = '');
+                }
+              ) 
+            : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+        ),
+      ),
     );
   }
 }
@@ -498,21 +513,71 @@ class _OrderActionButton extends StatelessWidget {
 }
 
 Future<void> _updateOrderStatus(BuildContext context, String orderId, String newStatus) async {
+  final messenger = ScaffoldMessenger.of(context);
   try {
+    final orderRef = FirebaseFirestore.instance.collection('orders').doc(orderId);
     final Map<String, dynamic> updates = {'status': newStatus};
     if (newStatus == 'ready') {
       updates['readyAt'] = FieldValue.serverTimestamp();
     } else if (newStatus == 'picked') {
       updates['pickedAt'] = FieldValue.serverTimestamp();
     }
-    await FirebaseFirestore.instance.collection('orders').doc(orderId).update(updates);
-    ScaffoldMessenger.of(context).showSnackBar(
+    await orderRef.update(updates);
+
+    // --- Notify Farmer & Owner ---
+    try {
+      final orderDoc = await orderRef.get();
+      final userId = orderDoc.data()?['userId'] as String?;
+      
+      if (userId != null) {
+        String titleTa = '', titleEn = '', bodyTa = '', bodyEn = '';
+        
+        if (newStatus == 'ready') {
+          titleTa = 'ஆர்டர் தயார்';
+          titleEn = 'Order Ready';
+          bodyTa = 'உங்கள் ஆர்டர் (#$orderId) கடையில் தயாராக உள்ளது. தயவுசெய்து வந்து பெற்றுக்கொள்ளவும்.';
+          bodyEn = 'Your order (#$orderId) is ready at the shop. Please pick it up.';
+        } else if (newStatus == 'picked') {
+          titleTa = 'ஆர்டர் பெறப்பட்டது';
+          titleEn = 'Order Delivered';
+          bodyTa = 'உங்கள் ஆர்டர் (#$orderId) வெற்றிகரமாக வழங்கப்பட்டது. நன்றி!';
+          bodyEn = 'Your order (#$orderId) was successfully delivered. Thank you!';
+        }
+
+        if (titleTa.isNotEmpty) {
+          await NotificationRepository().sendNotification(
+            recipientUid: userId,
+            titleTa: titleTa,
+            titleEn: titleEn,
+            bodyTa: bodyTa,
+            bodyEn: bodyEn,
+            type: NotificationType.orderUpdate,
+            data: {'orderId': orderId, 'status': newStatus},
+          );
+        }
+      }
+
+      if (newStatus == 'picked') {
+        await NotificationRepository().notifyOwner(
+          titleTa: 'விற்பனை முடிந்தது',
+          titleEn: 'Sale Completed',
+          bodyTa: 'ஆர்டர் (#$orderId) வழங்கப்பட்டது.',
+          bodyEn: 'Order (#$orderId) has been delivered.',
+          data: {'orderId': orderId, 'status': 'picked'},
+        );
+      }
+    } catch (e) {
+      print('Notification error: $e');
+    }
+    // ----------------------------
+
+    messenger.showSnackBar(
       SnackBar(
         content: Text(LocalizationService.tr('owner_orders_status_updated')),
       ),
     );
   } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
+    messenger.showSnackBar(
       SnackBar(
         content: Text(LocalizationService.tr('owner_orders_status_update_failed')),
       ),

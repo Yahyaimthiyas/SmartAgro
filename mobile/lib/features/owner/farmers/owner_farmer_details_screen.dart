@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart'; // [NEW]
 
 import '../../../core/constants/colors.dart';
 import '../../../core/services/localization_service.dart';
@@ -35,12 +36,18 @@ class OwnerFarmerDetailsScreen extends StatelessWidget {
 
           String? name;
           String? phone;
+          String? village;
+          String? landSize;
+          String? cropType;
           DateTime? createdAt;
 
           if (snapshot.hasData && snapshot.data!.data() != null) {
             final data = snapshot.data!.data()!;
             name = data['name'] as String?;
             phone = data['phone'] as String?;
+            village = data['village'] as String?;
+            landSize = data['landSize'] as String?;
+            cropType = data['cropType'] as String?;
             final ts = data['createdAt'] as Timestamp?;
             createdAt = ts?.toDate();
           }
@@ -57,6 +64,9 @@ class OwnerFarmerDetailsScreen extends StatelessWidget {
                 _FarmerProfileHeader(
                   name: displayName,
                   phone: phone,
+                  village: village,
+                  landSize: landSize,
+                  cropType: cropType,
                   createdAt: createdAt,
                 ),
                 const SizedBox(height: 24),
@@ -73,16 +83,23 @@ class OwnerFarmerDetailsScreen extends StatelessWidget {
 class _FarmerProfileHeader extends StatelessWidget {
   final String name;
   final String? phone;
+  final String? village;
+  final String? landSize;
+  final String? cropType;
   final DateTime? createdAt;
 
   const _FarmerProfileHeader({
     required this.name,
     required this.phone,
+    this.village,
+    this.landSize,
+    this.cropType,
     required this.createdAt,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isTa = LocalizationService.isTamil;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -103,22 +120,15 @@ class _FarmerProfileHeader extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: CircleAvatar(
-              radius: 40,
-              backgroundColor: Colors.white,
-              child: Text(
-                name.isNotEmpty ? name[0].toUpperCase() : '?',
-                style: GoogleFonts.poppins(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
+          CircleAvatar(
+            radius: 40,
+            backgroundColor: Colors.white,
+            child: Text(
+              name.isNotEmpty ? name[0].toUpperCase() : '?',
+              style: GoogleFonts.poppins(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
               ),
             ),
           ),
@@ -133,41 +143,79 @@ class _FarmerProfileHeader extends StatelessWidget {
           ),
           if (phone != null) ...[
             const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.phone, color: Colors.white, size: 14),
-                  const SizedBox(width: 6),
-                  Text(
-                    phone!,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+            Text(
+              phone!,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: Colors.white.withOpacity(0.9),
               ),
             ),
           ],
+          const SizedBox(height: 20),
+          const Divider(color: Colors.white24),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _FarmerInfoItem(
+                icon: Icons.location_on,
+                label: isTa ? 'கிராமம்' : 'Village',
+                value: village ?? '---',
+              ),
+              _FarmerInfoItem(
+                icon: Icons.landscape,
+                label: isTa ? 'நில அளவு' : 'Land Size',
+                value: landSize != null ? '$landSize Acre' : '---',
+              ),
+              _FarmerInfoItem(
+                icon: Icons.grass,
+                label: isTa ? 'பயிர்' : 'Crop',
+                value: cropType ?? '---',
+              ),
+            ],
+          ),
           if (createdAt != null) ...[
-             const SizedBox(height: 12),
-             Text(
-                'Joined: ${createdAt!.day}/${createdAt!.month}/${createdAt!.year}',
-                style: GoogleFonts.poppins(
-                   fontSize: 12,
-                   color: Colors.white.withOpacity(0.8),
-                ),
-             ),
+            const SizedBox(height: 16),
+            Text(
+              'Joined: ${DateFormat('d MMM yyyy').format(createdAt!)}',
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                color: Colors.white.withOpacity(0.7),
+              ),
+            ),
           ]
         ],
       ),
+    );
+  }
+}
+
+class _FarmerInfoItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _FarmerInfoItem({required this.icon, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.white70, size: 20),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: GoogleFonts.poppins(fontSize: 10, color: Colors.white60),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.notoSansTamil(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ],
     );
   }
 }

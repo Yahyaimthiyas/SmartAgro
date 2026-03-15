@@ -9,6 +9,7 @@ import '../../../core/services/localization_service.dart';
 import '../../auth/providers/auth_provider.dart' as app_auth;
 import 'farmer_profile_setup_screen.dart';
 import 'static_content_screen.dart'; // [NEW]
+import 'farmer_security_settings_screen.dart';
 import '../orders/farmer_orders_screen.dart';
 
 class FarmerProfileScreen extends StatelessWidget {
@@ -85,6 +86,19 @@ class FarmerProfileScreen extends StatelessWidget {
              const SizedBox(height: 16),
             _buildMenuCard(
                context, 
+               icon: Icons.security_rounded, 
+               title: LocalizationService.tr('profile_security'),
+               onTap: () {
+                 Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const FarmerSecuritySettingsScreen(),
+                  ),
+                );
+               }
+            ),
+             const SizedBox(height: 16),
+            _buildMenuCard(
+               context, 
                icon: Icons.receipt_long_rounded, 
                title: LocalizationService.tr('profile_my_orders'),
                onTap: () {
@@ -128,7 +142,7 @@ class FarmerProfileScreen extends StatelessWidget {
                     context: context,
                     applicationName: LocalizationService.tr('app_name'),
                     applicationVersion: '1.0.0',
-                    applicationLegalese: '© 2026 SmartAgro Inc.',
+                    applicationLegalese: LocalizationService.tr('profile_legalese'),
                   );
                },
             ),

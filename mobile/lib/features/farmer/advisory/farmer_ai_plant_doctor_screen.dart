@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'farmer_voice_advisory_screen.dart';
+import 'farmer_disease_search_screen.dart';
 
 import '../../../core/constants/colors.dart';
 import '../../../core/services/localization_service.dart';
@@ -36,11 +37,14 @@ class _FarmerAiPlantDoctorScreenState extends State<FarmerAiPlantDoctorScreen> {
   Map<String, bool> _readState = {};
   Map<String, bool> _deletedState = {};
 
+
   @override
   void initState() {
     super.initState();
     _loadReadState();
   }
+
+
 
   Future<void> _loadReadState() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -187,14 +191,35 @@ class _FarmerAiPlantDoctorScreenState extends State<FarmerAiPlantDoctorScreen> {
            .where(FieldPath.documentId, whereIn: productIds.take(10).toList())
            .get();
 
+       // Fetch average ratings
+       final productsWithRank = <_ProductRank>[];
+       for (final doc in querySnapshot.docs) {
+         final feedbackSnap = await FirebaseFirestore.instance
+             .collection('feedbacks')
+             .where('productId', isEqualTo: doc.id)
+             .get();
+         
+         double avg = 5.0; // Default if no reviews
+         if (feedbackSnap.docs.isNotEmpty) {
+           final total = feedbackSnap.docs.fold<double>(0, (sum, d) => sum + (d.data()['rating'] ?? 5));
+           avg = total / feedbackSnap.docs.length;
+         }
+         productsWithRank.add(_ProductRank(doc, avg));
+       }
+
+       // Sort: Highest rating first
+       productsWithRank.sort((a, b) => b.rating.compareTo(a.rating));
+
        setState(() {
-          _recommendedProducts = querySnapshot.docs;
+          _recommendedProducts = productsWithRank.map((r) => r.doc).toList();
           _isLoadingProducts = false;
        });
     } catch (e) {
        setState(() => _isLoadingProducts = false);
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -208,6 +233,13 @@ class _FarmerAiPlantDoctorScreenState extends State<FarmerAiPlantDoctorScreen> {
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search, color: AppColors.textPrimary),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FarmerDiseaseSearchScreen())),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
@@ -908,3 +940,26 @@ class _FarmerAiPlantDoctorScreenState extends State<FarmerAiPlantDoctorScreen> {
     );
   }
 }
+
+class _StatusInfo {
+  final String key;
+  final String titleTa;
+  final String titleEn;
+  final String subtitleTa;
+  final String subtitleEn;
+
+  const _StatusInfo({
+    required this.key,
+    required this.titleTa,
+    required this.titleEn,
+    required this.subtitleTa,
+    required this.subtitleEn,
+  });
+}
+
+class _ProductRank {
+  final QueryDocumentSnapshot<Map<String, dynamic>> doc;
+  final double rating;
+  _ProductRank(this.doc, this.rating);
+}
+

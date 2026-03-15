@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/services/localization_service.dart';
 import '../../../core/widgets/common_image.dart'; // [NEW]
+import '../../../core/utils/price_utils.dart';
 import 'owner_bulk_upload_screen.dart';
 import 'owner_edit_product_screen.dart';
 
@@ -259,7 +260,7 @@ class _ProductStockCard extends StatelessWidget {
     final needsManualUpdate = data['needsManualUpdate'] as bool? ?? false;
     
     // [NEW] Offer info
-    final isOfferActive = data['isOfferActive'] as bool? ?? false;
+    final isOfferActive = PriceUtils.isOfferActuallyActive(data);
     final offerVal = (data['offerValue'] as num? ?? 0).toDouble();
     final offerType = data['offerType'] as String? ?? 'percentage';
 
@@ -400,7 +401,7 @@ class _ProductStockCard extends StatelessWidget {
                     if (isOfferActive) ...[
                       const SizedBox(width: 6),
                       Text(
-                         _getOfferPrice(price, offerType, offerVal),
+                         '₹${PriceUtils.calculateFinalPrice(data).toStringAsFixed(0)}',
                          style: GoogleFonts.notoSansTamil(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
@@ -444,6 +445,13 @@ class _ProductStockCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
+                      // [NEW] Reviews button
+                      IconButton(
+                        onPressed: () => _showProductReviews(context, docId, displayName),
+                        icon: const Icon(Icons.reviews_outlined, color: Colors.blueAccent),
+                        tooltip: 'View Reviews',
+                      ),
+                      const SizedBox(width: 8),
                       // Edit button
                       ElevatedButton.icon(
                         onPressed: () {
@@ -481,13 +489,150 @@ class _ProductStockCard extends StatelessWidget {
     );
   }
 
-  String _getOfferPrice(num price, String type, double val) {
-    double finalPrice = price.toDouble();
-    if (type == 'percentage') {
-       finalPrice = price - (price * val / 100);
-    } else {
-       finalPrice = val;
-    }
-    return '₹${finalPrice.toStringAsFixed(0)}';
+  void _showProductReviews(BuildContext context, String productId, String productName) {
+    final isTa = LocalizationService.isTamil;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Container(
+        height: MediaQuery.of(ctx).size.height * 0.7,
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$productName - ${isTa ? 'கருத்துக்கள்' : 'Reviews'}',
+              style: GoogleFonts.notoSansTamil(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream: FirebaseFirestore.instance
+                    .collection('feedbacks')
+                    .where('productId', isEqualTo: productId)
+                    .orderBy('createdAt', descending: true)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return Center(child: Text(isTa ? 'மதிப்பீடுகள் எதுவும் இல்லை' : 'No reviews yet'));
+                  
+                  final docs = snapshot.data!.docs;
+
+                  return ListView.separated(
+                    itemCount: docs.length,
+                    separatorBuilder: (_, __) => const Divider(),
+                    itemBuilder: (ctx, i) {
+                      final fbDoc = docs[i];
+                      final fb = fbDoc.data();
+                      final rating = fb['rating'] as int? ?? 5;
+                      final ownerReply = fb['ownerReply'] as String?;
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ListTile(
+                            leading: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('$rating', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                const Icon(Icons.star, color: Colors.amber, size: 16),
+                              ],
+                            ),
+                            title: Text(fb['userName'] ?? 'Farmer', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(fb['comment'] ?? '', style: const TextStyle(fontSize: 12)),
+                                if (fb['imageUrl'] != null) ...[
+                                  const SizedBox(height: 8),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: CommonImage(imageUrl: fb['imageUrl'], height: 100, width: 150, fit: BoxFit.cover),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            trailing: Text(
+                              _formatDate(fb['createdAt'] as Timestamp?),
+                              style: const TextStyle(fontSize: 10, color: Colors.grey),
+                            ),
+                          ),
+                          if (ownerReply != null)
+                            Container(
+                              margin: const EdgeInsets.only(left: 56, right: 16, bottom: 8),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade50,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(isTa ? 'உங்கள் பதில்:' : 'Your Reply:', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.blue)),
+                                  const SizedBox(height: 4),
+                                  Text(ownerReply, style: const TextStyle(fontSize: 12)),
+                                ],
+                              ),
+                            )
+                          else
+                            Padding(
+                              padding: const EdgeInsets.only(left: 56, bottom: 8),
+                              child: TextButton.icon(
+                                onPressed: () => _showReplyDialog(context, fbDoc.id, isTa),
+                                icon: const Icon(Icons.reply, size: 16),
+                                label: Text(isTa ? 'பதில் அளி' : 'Reply'),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showReplyDialog(BuildContext context, String feedbackId, bool isTa) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isTa ? 'பதில் அளிக்கவும்' : 'Send Reply'),
+        content: TextField(
+          controller: controller,
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: isTa ? 'உங்கள் பதிலை இங்கே தட்டச்சு செய்யவும்...' : 'Type your reply here...',
+            border: const OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(isTa ? 'ரத்து' : 'Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              if (controller.text.trim().isEmpty) return;
+              await FirebaseFirestore.instance.collection('feedbacks').doc(feedbackId).update({
+                'ownerReply': controller.text.trim(),
+                'repliedAt': FieldValue.serverTimestamp(),
+              });
+              Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            child: Text(isTa ? 'அனுப்பு' : 'Send', style: const TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(Timestamp? ts) {
+    if (ts == null) return '';
+    final d = ts.toDate();
+    return "${d.day}/${d.month}/${d.year}";
   }
 }

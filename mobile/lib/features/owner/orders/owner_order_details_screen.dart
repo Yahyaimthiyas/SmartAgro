@@ -1,9 +1,13 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/colors.dart';
 import '../../../core/services/localization_service.dart';
+import '../billing/owner_invoice_screen.dart';
+import '../../notifications/repositories/notification_repository.dart';
+import '../../notifications/models/app_notification.dart';
 
 class OwnerOrderDetailsScreen extends StatelessWidget {
   final String orderId;
@@ -205,10 +209,18 @@ class OwnerOrderDetailsScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (data['needsDosageAdvice'] == true) ...[
+                  const SizedBox(height: 16),
+                  _buildDosageAdviceSection(context, orderId, data),
+                ],
+                if (status == 'picked') ...[
+                  const SizedBox(height: 16),
+                  _OrderFeedbackSection(orderId: orderId),
+                ],
               ],
             ),
           ),
-          bottomNavigationBar: _OwnerOrderActions(orderId: orderId, status: status),
+          bottomNavigationBar: _OwnerOrderActions(orderId: orderId, status: status, orderData: data),
         );
       },
     );
@@ -394,10 +406,12 @@ class _FarmerInfoSection extends StatelessWidget {
 class _OwnerOrderActions extends StatelessWidget {
   final String orderId;
   final String status;
+  final Map<String, dynamic> orderData;
 
   const _OwnerOrderActions({
     required this.orderId,
     required this.status,
+    required this.orderData,
   });
 
   @override
@@ -414,6 +428,35 @@ class _OwnerOrderActions extends StatelessWidget {
       primaryStatus = 'picked';
       primaryLabelKey = 'owner_orders_mark_picked';
       showCancel = true;
+    }
+
+    if (status == 'reserved' && orderData['needsDosageAdvice'] == true && orderData['dosageAdviceStatus'] == 'requested') {
+      // Owner must provide advice first
+      return SafeArea(
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          color: Colors.white,
+          child: Text(
+            LocalizationService.isTamil ? 'இந்த ஆர்டருக்கு நீங்கள் முதலில் அளவு ஆலோசனை வழங்க வேண்டும்.' : 'You must provide dosage advice for this order first.',
+            style: GoogleFonts.notoSansTamil(fontSize: 14, color: Colors.orange.shade800, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    if (status == 'reserved' && orderData['dosageAdviceStatus'] == 'provided') {
+       return SafeArea(
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          color: Colors.white,
+          child: Text(
+            LocalizationService.isTamil ? 'விவசாயியின் பதிலுக்காகக் காத்திருக்கிறது...' : 'Waiting for farmer\'s response...',
+            style: GoogleFonts.notoSansTamil(fontSize: 14, color: Colors.blue.shade800, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
     }
 
     if (primaryStatus == null && !showCancel) {
@@ -433,38 +476,87 @@ class _OwnerOrderActions extends StatelessWidget {
             ),
           ],
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            if (showCancel) ...[
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () async {
-                    await _updateOrderStatus(context, orderId, 'cancelled');
-                  },
-                  child: Text(
-                    LocalizationService.tr('owner_orders_cancel'),
-                    style: GoogleFonts.notoSansTamil(fontSize: 13),
-                  ),
-                ),
-              ),
+            if (status == 'picked') ...[
+               SizedBox(
+                 width: double.infinity,
+                 child: ElevatedButton.icon(
+                   onPressed: () {
+                      FirebaseFirestore.instance.collection('orders').doc(orderId).get().then((doc) {
+                         if (doc.exists) {
+                            Navigator.push(
+                               context,
+                               MaterialPageRoute(
+                                  builder: (_) => OwnerInvoiceScreen(
+                                     orderId: orderId,
+                                     orderData: doc.data()!,
+                                  ),
+                               ),
+                            );
+                         }
+                      });
+                   },
+                   icon: const Icon(Icons.receipt_long, color: Colors.white),
+                   label: Text(
+                     LocalizationService.isTamil ? 'பில் உருவாக்கவும்' : 'Generate Bill',
+                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                   ),
+                   style: ElevatedButton.styleFrom(
+                     backgroundColor: AppColors.primary,
+                     padding: const EdgeInsets.symmetric(vertical: 16),
+                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                   ),
+                 ),
+               ),
+               const SizedBox(height: 8),
             ],
-            if (showCancel && primaryStatus != null) const SizedBox(width: 12),
-            if (primaryStatus != null) ...[
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () async {
-                    await _updateOrderStatus(context, orderId, primaryStatus!);
-                  },
-                  child: Text(
-                    LocalizationService.tr(primaryLabelKey!),
-                    style: GoogleFonts.notoSansTamil(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+            Row(
+              children: [
+                if (showCancel) ...[
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () async {
+                        await _updateOrderStatus(context, orderId, 'cancelled');
+                      },
+                      child: Text(
+                        LocalizationService.tr('owner_orders_cancel'),
+                        style: GoogleFonts.notoSansTamil(fontSize: 13),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ],
+                ],
+                if (showCancel && primaryStatus != null) const SizedBox(width: 12),
+                if (primaryStatus != null) ...[
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        DateTime? expiryDate;
+                        if (primaryStatus == 'picked' && orderData['paymentMethod'] == 'credit') {
+                           expiryDate = await showDatePicker(
+                             context: context,
+                             initialDate: DateTime.now().add(const Duration(days: 30)),
+                             firstDate: DateTime.now(),
+                             lastDate: DateTime.now().add(const Duration(days: 365)),
+                             helpText: LocalizationService.isTamil ? 'கடன் காலாவதி தேதியைத் தேர்ந்தெடுக்கவும்' : 'Select Credit Expiry Date',
+                           );
+                           if (expiryDate == null) return; // User cancelled date selection
+                        }
+                        await _updateOrderStatus(context, orderId, primaryStatus!, creditExpiry: expiryDate);
+                      },
+                      child: Text(
+                        LocalizationService.tr(primaryLabelKey!),
+                        style: GoogleFonts.notoSansTamil(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ],
         ),
       ),
@@ -472,7 +564,7 @@ class _OwnerOrderActions extends StatelessWidget {
   }
 }
 
-Future<void> _updateOrderStatus(BuildContext context, String orderId, String newStatus) async {
+Future<void> _updateOrderStatus(BuildContext context, String orderId, String newStatus, {DateTime? creditExpiry}) async {
   try {
     final orderRef = FirebaseFirestore.instance.collection('orders').doc(orderId);
 
@@ -486,6 +578,7 @@ Future<void> _updateOrderStatus(BuildContext context, String orderId, String new
           'status': newStatus,
           if (newStatus == 'ready') 'readyAt': FieldValue.serverTimestamp(),
           if (newStatus == 'picked') 'pickedAt': FieldValue.serverTimestamp(),
+          if (creditExpiry != null) 'creditExpiryDate': Timestamp.fromDate(creditExpiry),
        });
 
        // Logic: If status becomes 'cancelled', restore stock
@@ -506,7 +599,60 @@ Future<void> _updateOrderStatus(BuildContext context, String orderId, String new
              }
           }
        }
-    });
+     });
+
+    // --- Notify Farmer & Owner ---
+    try {
+      final orderDoc = await orderRef.get();
+      final userId = orderDoc.data()?['userId'] as String?;
+      
+      if (userId != null) {
+        String titleTa = '', titleEn = '', bodyTa = '', bodyEn = '';
+        
+        if (newStatus == 'ready') {
+          titleTa = 'ஆர்டர் தயார்';
+          titleEn = 'Order Ready';
+          bodyTa = 'உங்கள் ஆர்டர் (#$orderId) கடையில் தயாராக உள்ளது. தயவுசெய்து வந்து பெற்றுக்கொள்ளவும்.';
+          bodyEn = 'Your order (#$orderId) is ready at the shop. Please pick it up.';
+        } else if (newStatus == 'picked') {
+          titleTa = 'ஆர்டர் பெறப்பட்டது';
+          titleEn = 'Order Delivered';
+          bodyTa = 'உங்கள் ஆர்டர் (#$orderId) வெற்றிகரமாக வழங்கப்பட்டது. நன்றி!';
+          bodyEn = 'Your order (#$orderId) was successfully delivered. Thank you!';
+        } else if (newStatus == 'cancelled') {
+          titleTa = 'ஆர்டர் ரத்து செய்யப்பட்டது';
+          titleEn = 'Order Cancelled';
+          bodyTa = 'உங்கள் ஆர்டர் (#$orderId) ரத்து செய்யப்பட்டது.';
+          bodyEn = 'Your order (#$orderId) has been cancelled.';
+        }
+
+        if (titleTa.isNotEmpty) {
+          await NotificationRepository().sendNotification(
+            recipientUid: userId,
+            titleTa: titleTa,
+            titleEn: titleEn,
+            bodyTa: bodyTa,
+            bodyEn: bodyEn,
+            type: NotificationType.orderUpdate,
+            data: {'orderId': orderId, 'status': newStatus},
+          );
+        }
+      }
+
+      // Also notify owner (the request said "send notification to owner and farmer" if delivered)
+      if (newStatus == 'picked') {
+        await NotificationRepository().notifyOwner(
+          titleTa: 'விற்பனை முடிந்தது',
+          titleEn: 'Sale Completed',
+          bodyTa: 'ஆர்டர் (#$orderId) வழங்கப்பட்டது.',
+          bodyEn: 'Order (#$orderId) has been delivered.',
+          data: {'orderId': orderId, 'status': 'picked'},
+        );
+      }
+    } catch (e) {
+      print('Notification error: $e');
+    }
+    // ----------------------------
 
     if (context.mounted) {
        ScaffoldMessenger.of(context).showSnackBar(
@@ -528,3 +674,388 @@ Future<void> _updateOrderStatus(BuildContext context, String orderId, String new
   }
 }
 
+Widget _buildDosageAdviceSection(BuildContext context, String orderId, Map<String, dynamic> data) {
+  final disease = data['diseaseDetails'] as String? ?? '';
+  final advice = data['dosageAdvice'] as String? ?? '';
+  final status = data['dosageAdviceStatus'] as String? ?? 'requested';
+  final isTa = LocalizationService.isTamil;
+  
+  return Container(
+    width: double.infinity,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: Colors.blue.shade100),
+    ),
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.medical_information, color: Colors.blue),
+            const SizedBox(width: 8),
+            Text(
+              isTa ? 'அளவு ஆலோசனைத் தேவை' : 'Dosage Advice Request',
+              style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, color: Colors.blue.shade800),
+            ),
+          ],
+        ),
+        const Divider(height: 24),
+        Text(
+          isTa ? 'நோய் விவரங்கள்:' : 'Disease Details:',
+          style: GoogleFonts.notoSansTamil(fontSize: 12, fontWeight: FontWeight.bold),
+        ),
+        Text(
+          disease,
+          style: GoogleFonts.notoSansTamil(fontSize: 14),
+        ),
+        if (data['diseaseImageUrl'] != null) ...[
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              data['diseaseImageUrl'],
+              height: 200,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Container(
+                  height: 200,
+                  color: Colors.grey.shade100,
+                  child: const Center(child: CircularProgressIndicator()),
+                );
+              },
+            ),
+          ),
+        ],
+        if (advice.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Text(
+            isTa ? 'உங்கள் ஆலோசனை:' : 'Your Advice:',
+            style: GoogleFonts.notoSansTamil(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green),
+          ),
+          Text(
+            advice,
+            style: GoogleFonts.notoSansTamil(fontSize: 14),
+          ),
+        ],
+        const SizedBox(height: 16),
+        if (status == 'requested')
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => _showAdviceDialog(context, orderId, data),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+              child: Text(isTa ? 'ஆலோசனை வழங்கவும்' : 'Provide Advice'),
+            ),
+          )
+        else
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(8)),
+            child: Text(
+              isTa ? 'ஆலோசனை வழங்கப்பட்டது' : 'Advice Provided via App Notification',
+              style: GoogleFonts.notoSansTamil(fontSize: 12, color: Colors.green.shade800),
+              textAlign: TextAlign.center,
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+// [REMOVED DIRECT COMMS AS REQUESTED]
+
+
+void _showAdviceDialog(BuildContext context, String orderId, Map<String, dynamic> data) {
+  final adviceController = TextEditingController();
+  final isTa = LocalizationService.isTamil;
+  final List<Map<String, dynamic>> recommended = [];
+  bool saveAsTemplate = false;
+
+  showDialog(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setModalState) => AlertDialog(
+        title: Text(isTa ? 'ஆலோசனை வழங்கவும்' : 'Provide Dosage Advice'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (data['cropName'] != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.agriculture, size: 16, color: Colors.grey),
+                      const SizedBox(width: 8),
+                      Text("${data['cropName']} (${data['diseaseLevel'] ?? ''})", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+              TextField(
+                controller: adviceController,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: isTa ? 'உங்கள் ஆலோசனையை இங்கே உள்ளிடவும்...' : 'Enter your advice here...',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              CheckboxListTile(
+                value: saveAsTemplate,
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: Text(isTa ? 'பொதுவான ஆலோசனையாகச் சேமிக்கவும்' : 'Save as Common Template'),
+                onChanged: (v) => setModalState(() => saveAsTemplate = v!),
+              ),
+              const Divider(),
+              Text(
+                isTa ? 'பரிந்துரைக்கப்படும் தயாரிப்புகள்' : 'Recommended Products',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              const SizedBox(height: 8),
+              for (var i = 0; i < recommended.length; i++)
+                ListTile(
+                  dense: true,
+                  title: Text(isTa ? recommended[i]['name_ta'] : recommended[i]['name_en']),
+                  subtitle: TextField(
+                    decoration: const InputDecoration(hintText: 'Dosage (e.g. 5ml/L)', isDense: true),
+                    onChanged: (v) => recommended[i]['dosage'] = v,
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                    onPressed: () => setModalState(() => recommended.removeAt(i)),
+                  ),
+                ),
+              TextButton.icon(
+                onPressed: () async {
+                  final result = await _showProductPicker(context);
+                  if (result != null) {
+                    setModalState(() {
+                      recommended.add({...result, 'dosage': ''});
+                    });
+                  }
+                },
+                icon: const Icon(Icons.add),
+                label: Text(isTa ? 'தயாரிப்பைச் சேர்க்கவும்' : 'Add Product'),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(isTa ? 'ரத்து' : 'Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              final adviceText = adviceController.text.trim();
+              if (adviceText.isEmpty) return;
+              
+              await FirebaseFirestore.instance.collection('orders').doc(orderId).update({
+                'dosageAdvice': adviceText,
+                'recommendedProducts': recommended,
+                'dosageAdviceStatus': 'provided',
+              });
+
+              if (saveAsTemplate && data['cropName'] != null && data['diseaseDetails'] != null) {
+                await FirebaseFirestore.instance.collection('common_diseases').add({
+                  'cropName': data['cropName'],
+                  'crop_lower': (data['cropName'] as String).toLowerCase(),
+                  'diseaseName': data['diseaseDetails'],
+                  'disease_lower': (data['diseaseDetails'] as String).toLowerCase(),
+                  'level': data['diseaseLevel'],
+                  'advice': adviceText,
+                  'products': recommended,
+                });
+              }
+
+              Navigator.pop(ctx);
+            },
+            child: Text(isTa ? 'அனுப்புக' : 'Send'),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Future<Map<String, dynamic>?> _showProductPicker(BuildContext context) async {
+  final isTa = LocalizationService.isTamil;
+  final results = await FirebaseFirestore.instance.collection('products').get();
+  final products = results.docs.map((d) => {'id': d.id, ...d.data()}).toList();
+  
+  return showDialog<Map<String, dynamic>>(
+    context: context,
+    builder: (ctx) {
+      final searchController = TextEditingController();
+      return StatefulBuilder(
+        builder: (ctx, setS) => AlertDialog(
+          title: Text(isTa ? 'தயாரிப்பைத் தேர்ந்தெடுக்கவும்' : 'Pick Product'),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 400,
+            child: Column(
+              children: [
+                TextField(
+                  controller: searchController,
+                  onChanged: (v) => setS(() {}),
+                  decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search...'),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: products.length,
+                    itemBuilder: (c, i) {
+                      final p = products[i];
+                      final name = isTa ? (p['name_ta'] ?? p['name_en']) : (p['name_en'] ?? p['name_ta']);
+                      if (searchController.text.isNotEmpty && !name.toString().toLowerCase().contains(searchController.text.toLowerCase())) {
+                        return const SizedBox.shrink();
+                      }
+                      return ListTile(
+                        title: Text(name),
+                        onTap: () => Navigator.pop(ctx, p),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
+
+class _OrderFeedbackSection extends StatelessWidget {
+  final String orderId;
+
+  const _OrderFeedbackSection({required this.orderId});
+
+  @override
+  Widget build(BuildContext context) {
+    final isTa = LocalizationService.isTamil;
+
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('feedbacks')
+          .where('orderId', isEqualTo: orderId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final fbDoc = snapshot.data!.docs.first;
+        final fb = fbDoc.data();
+        final rating = fb['rating'] as int? ?? 5;
+        final comment = fb['comment'] as String? ?? '';
+        final imageUrl = fb['imageUrl'] as String?;
+        final ownerReply = fb['ownerReply'] as String?;
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.amber.shade100),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                   Text(
+                    isTa ? 'விவசாயியின் கருத்து' : 'Farmer\'s Feedback',
+                    style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.amber.shade900),
+                  ),
+                  Row(
+                    children: List.generate(5, (index) => Icon(
+                      index < rating ? Icons.star : Icons.star_border,
+                      color: Colors.amber,
+                      size: 16,
+                    )),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (comment.isNotEmpty)
+                Text(comment, style: GoogleFonts.notoSansTamil(fontSize: 14)),
+              if (imageUrl != null) ...[
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(imageUrl, height: 180, width: double.infinity, fit: BoxFit.cover),
+                ),
+              ],
+              if (ownerReply != null) ...[
+                const Divider(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(12)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(isTa ? 'உங்கள் பதில்:' : 'Your Reply:', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.blue)),
+                      const SizedBox(height: 4),
+                      Text(ownerReply, style: const TextStyle(fontSize: 13)),
+                    ],
+                  ),
+                ),
+              ] else ...[
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showOwnerReplyDialog(context, fbDoc.id, isTa),
+                    icon: const Icon(Icons.reply, size: 18),
+                    label: Text(isTa ? 'பதில் அளிக்கவும்' : 'Send Reply'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: const BorderSide(color: AppColors.primary),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showOwnerReplyDialog(BuildContext context, String feedbackId, bool isTa) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isTa ? 'பதில் அளிக்கவும்' : 'Send Reply'),
+        content: TextField(
+          controller: controller,
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: isTa ? 'உங்கள் பதிலை இங்கே தட்டச்சு செய்யவும்...' : 'Type your reply here...',
+            border: const OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(isTa ? 'ரத்து' : 'Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              if (controller.text.trim().isEmpty) return;
+              await FirebaseFirestore.instance.collection('feedbacks').doc(feedbackId).update({
+                'ownerReply': controller.text.trim(),
+                'repliedAt': FieldValue.serverTimestamp(),
+              });
+              Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            child: Text(isTa ? 'அனுப்பு' : 'Send', style: const TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+}
