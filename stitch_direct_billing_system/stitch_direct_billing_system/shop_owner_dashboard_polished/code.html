@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SmartAgro Shop Owner Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "primary": "#ec5b13",
+                "background-light": "#f8f6f6",
+                "background-dark": "#221610",
+              },
+              fontFamily: {
+                "display": ["Public Sans"]
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 transition-colors duration-200">
+<div class="flex flex-col min-h-screen">
+<!-- Top Header -->
+<header class="sticky top-0 z-50 flex items-center bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 justify-between">
+<div class="flex items-center gap-3">
+<div class="bg-primary/10 p-2 rounded-lg">
+<span class="material-symbols-outlined text-primary text-2xl">agriculture</span>
+</div>
+<div>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-tight">SmartAgro Shop</h2>
+<p class="text-slate-500 dark:text-slate-400 text-xs">Analytics Overview</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center justify-center rounded-full h-10 w-10 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="relative flex items-center justify-center rounded-full h-10 w-10 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 flex h-2 w-2 rounded-full bg-primary"></span>
+</button>
+<div class="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-white font-bold ml-2">
+                    JD
+                </div>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto pb-24">
+<!-- KPI Cards Section -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
+<div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex justify-between items-start">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium uppercase tracking-wider">Today's Sales</p>
+<span class="material-symbols-outlined text-primary">payments</span>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="text-slate-900 dark:text-white tracking-tight text-3xl font-bold leading-tight">$1,240.00</p>
+<p class="text-emerald-600 dark:text-emerald-400 text-sm font-bold flex items-center">
+<span class="material-symbols-outlined text-xs">trending_up</span> 12%
+                        </p>
+</div>
+<p class="text-slate-400 text-xs">vs yesterday $1,107</p>
+</div>
+<div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex justify-between items-start">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium uppercase tracking-wider">Active Credit</p>
+<span class="material-symbols-outlined text-primary">account_balance_wallet</span>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="text-slate-900 dark:text-white tracking-tight text-3xl font-bold leading-tight">$3,500.00</p>
+<p class="text-amber-600 dark:text-amber-400 text-sm font-bold flex items-center">
+<span class="material-symbols-outlined text-xs">trending_up</span> 5%
+                        </p>
+</div>
+<p class="text-slate-400 text-xs">14 pending ledger entries</p>
+</div>
+<div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex justify-between items-start">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium uppercase tracking-wider">Low Stock</p>
+<span class="material-symbols-outlined text-primary">inventory_2</span>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="text-slate-900 dark:text-white tracking-tight text-3xl font-bold leading-tight">8 Items</p>
+<p class="text-rose-600 dark:text-rose-400 text-sm font-bold flex items-center">
+<span class="material-symbols-outlined text-xs">warning</span> Urgent
+                        </p>
+</div>
+<p class="text-slate-400 text-xs">Fertilizers &amp; Seeds category</p>
+</div>
+</div>
+<!-- Quick Actions -->
+<div class="px-4 py-2">
+<h3 class="text-slate-900 dark:text-white text-md font-bold leading-tight mb-3">Quick Actions</h3>
+<div class="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-primary px-5 text-white shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-[20px]">add_shopping_cart</span>
+<p class="text-sm font-semibold">New Bill</p>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 text-slate-700 dark:text-slate-200">
+<span class="material-symbols-outlined text-[20px]">post_add</span>
+<p class="text-sm font-medium">Add Stock</p>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 text-slate-700 dark:text-slate-200">
+<span class="material-symbols-outlined text-[20px]">menu_book</span>
+<p class="text-sm font-medium">Credit Ledger</p>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 text-slate-700 dark:text-slate-200">
+<span class="material-symbols-outlined text-[20px]">file_download</span>
+<p class="text-sm font-medium">Reports</p>
+</button>
+</div>
+</div>
+<!-- Analytics Visualization -->
+<div class="p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+<!-- Line Chart Placeholder -->
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-slate-900 dark:text-white text-lg font-bold">Monthly Revenue Trends</h3>
+<select class="bg-slate-50 dark:bg-slate-800 border-none text-xs rounded-lg font-medium py-1 px-3">
+<option>Last 6 Months</option>
+<option>Last Year</option>
+</select>
+</div>
+<div class="h-64 flex flex-col justify-end">
+<div class="flex items-end justify-between h-48 gap-2 px-2">
+<div class="w-full bg-slate-100 dark:bg-slate-800 rounded-t-lg relative group h-[40%]">
+<div class="absolute inset-x-0 bottom-0 bg-primary/20 rounded-t-lg h-full transition-all group-hover:bg-primary/40"></div>
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-400">Jan</div>
+</div>
+<div class="w-full bg-slate-100 dark:bg-slate-800 rounded-t-lg relative group h-[60%]">
+<div class="absolute inset-x-0 bottom-0 bg-primary/20 rounded-t-lg h-full transition-all group-hover:bg-primary/40"></div>
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-400">Feb</div>
+</div>
+<div class="w-full bg-slate-100 dark:bg-slate-800 rounded-t-lg relative group h-[55%]">
+<div class="absolute inset-x-0 bottom-0 bg-primary/20 rounded-t-lg h-full transition-all group-hover:bg-primary/40"></div>
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-400">Mar</div>
+</div>
+<div class="w-full bg-slate-100 dark:bg-slate-800 rounded-t-lg relative group h-[85%]">
+<div class="absolute inset-x-0 bottom-0 bg-primary rounded-t-lg h-full transition-all group-hover:bg-primary/90"></div>
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-primary">Apr</div>
+</div>
+<div class="w-full bg-slate-100 dark:bg-slate-800 rounded-t-lg relative group h-[70%]">
+<div class="absolute inset-x-0 bottom-0 bg-primary/20 rounded-t-lg h-full transition-all group-hover:bg-primary/40"></div>
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-400">May</div>
+</div>
+<div class="w-full bg-slate-100 dark:bg-slate-800 rounded-t-lg relative group h-[75%]">
+<div class="absolute inset-x-0 bottom-0 bg-primary/20 rounded-t-lg h-full transition-all group-hover:bg-primary/40"></div>
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-400">Jun</div>
+</div>
+</div>
+<div class="border-t border-slate-100 dark:border-slate-800 mt-4 pt-4 flex justify-between text-[11px] text-slate-500 font-medium">
+<div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary"></span> Revenue</div>
+<div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-300"></span> Previous Period</div>
+<div class="font-bold text-slate-900 dark:text-white">Avg. $4.2k/mo</div>
+</div>
+</div>
+</div>
+<!-- Low Stock Alerts -->
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-slate-900 dark:text-white text-lg font-bold">Low Stock Alerts</h3>
+<button class="text-primary text-sm font-semibold hover:underline">View All</button>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between p-3 rounded-lg bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/20">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-white dark:bg-slate-800 flex items-center justify-center text-rose-600">
+<span class="material-symbols-outlined">fluid_med</span>
+</div>
+<div>
+<p class="font-bold text-sm text-slate-900 dark:text-white">Urea Nitrogen 46%</p>
+<p class="text-xs text-slate-500">2 bags left</p>
+</div>
+</div>
+<button class="bg-rose-600 text-white text-[11px] font-bold px-3 py-1.5 rounded uppercase tracking-wider">Restock</button>
+</div>
+<div class="flex items-center justify-between p-3 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-white dark:bg-slate-800 flex items-center justify-center text-amber-600">
+<span class="material-symbols-outlined">eco</span>
+</div>
+<div>
+<p class="font-bold text-sm text-slate-900 dark:text-white">Tomato Seeds (Hybrid)</p>
+<p class="text-xs text-slate-500">5 packets left</p>
+</div>
+</div>
+<button class="bg-amber-600 text-white text-[11px] font-bold px-3 py-1.5 rounded uppercase tracking-wider">Restock</button>
+</div>
+<div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-white dark:bg-slate-800 flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined">pest_control</span>
+</div>
+<div>
+<p class="font-bold text-sm text-slate-900 dark:text-white">Glyphosate Herbicide</p>
+<p class="text-xs text-slate-500">12 liters left</p>
+</div>
+</div>
+<button class="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[11px] font-bold px-3 py-1.5 rounded uppercase tracking-wider">Restock</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Ledger -->
+<div class="px-4 pb-6">
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
+<div class="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+<h3 class="text-slate-900 dark:text-white text-md font-bold">Recent Credit Ledger</h3>
+<span class="material-symbols-outlined text-slate-400">filter_list</span>
+</div>
+<div class="divide-y divide-slate-100 dark:divide-slate-800">
+<div class="p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<img alt="Customer avatar" class="w-10 h-10 rounded-full bg-slate-100" data-alt="Cartoon avatar of a male farmer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkEl0kD9CUmyykKwDLH3UBOG021bKz_iA1fJIBinNN9eIuI8bFYLmHU5Hx-iM7HUi7SQdCMmBWpqlXjs8XSjAm3UpajD5NUf_e4kuyekCjVwNu6DV1-0tm6aHEIxD0-gkOVW-R3ZeYQf3ks2YzrnMvND4u7E8JIgS2JfVRI_9X-JQ_ruDk-1NM_OGCZPXFvVWXFiST2eGa2-1ZNgY4HjImBOTuvP-C_qF68J_MbK7MKwhZxIb3UwbaMGo8PxcXE6l8ycSaGV_hmTzK"/>
+<div>
+<p class="font-bold text-sm">Samuel O. Green</p>
+<p class="text-xs text-slate-500">2 hours ago • Fert. Purchase</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-rose-500">-$450.00</p>
+<span class="text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-bold">PENDING</span>
+</div>
+</div>
+<div class="p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<img alt="Customer avatar" class="w-10 h-10 rounded-full bg-slate-100" data-alt="Cartoon avatar of a female farmer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBV_8853Thh5tdtg6AHavuRFQ6D_yTcIenJgLoku18s5DW8NPqmbt4878A4YYF6zwxL2jJ5Iv85AXN5kCT2RL4ODhtio5BbcWhgHGHLES-ltHDZ9MiVgk8SYDyJg03msX3oLjw8-cPZRffbZlAkY1Zem5Wm-X1bdCgv-IVUXoa9xnuQOdamMWOFfq_UT3XWKvKHH8EX_o89Nq0P5nfOOlCs3yLHn4WCWTRvklIQhWmdbUj-GREDGg_tsV69mKs-ffZtd-76j9fCLBFb"/>
+<div>
+<p class="font-bold text-sm">Anita Kumar</p>
+<p class="text-xs text-slate-500">Yesterday • Tool Set</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-emerald-500">+$120.00</p>
+<span class="text-[10px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full font-bold">SETTLED</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 flex border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 pb-4 pt-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined text-[26px]">dashboard</span>
+<p class="text-[10px] font-bold uppercase tracking-wider">Home</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined text-[26px]">inventory_2</span>
+<p class="text-[10px] font-bold uppercase tracking-wider">Stock</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined text-[26px]">credit_card</span>
+<p class="text-[10px] font-bold uppercase tracking-wider">Ledger</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined text-[26px]">bar_chart</span>
+<p class="text-[10px] font-bold uppercase tracking-wider">Reports</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined text-[26px]">settings</span>
+<p class="text-[10px] font-bold uppercase tracking-wider">Settings</p>
+</a>
+</nav>
+</div>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</body></html>

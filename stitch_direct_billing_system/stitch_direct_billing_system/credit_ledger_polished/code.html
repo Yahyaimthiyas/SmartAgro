@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Owner Credit Ledger - SmartAgro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1b5e20", // Agro-Green (Forest Green)
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#221610",
+                        "debt-red": "#d32f2f",
+                        "credit-green": "#2e7d32",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Public Sans', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen pb-24">
+<!-- Header Section -->
+<header class="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3">
+<div class="flex items-center justify-between max-w-5xl mx-auto">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary cursor-pointer">arrow_back</span>
+<h1 class="text-lg font-bold tracking-tight">Credit Ledger</h1>
+</div>
+<div class="flex gap-2">
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400">download</span>
+</button>
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400">more_vert</span>
+</button>
+</div>
+</div>
+</header>
+<main class="max-w-5xl mx-auto p-4 space-y-6">
+<!-- Summary Card -->
+<div class="bg-primary rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+<div class="relative z-10">
+<p class="text-sm font-medium opacity-80 uppercase tracking-wider">Total Outstanding Credit</p>
+<h2 class="text-3xl font-bold mt-1">₹4,52,000</h2>
+<div class="flex gap-4 mt-4">
+<div class="bg-white/20 rounded-lg p-3 flex-1">
+<p class="text-xs opacity-80">Total Debt</p>
+<p class="text-lg font-semibold">₹5,12,000</p>
+</div>
+<div class="bg-white/20 rounded-lg p-3 flex-1">
+<p class="text-xs opacity-80">Total Credit</p>
+<p class="text-lg font-semibold">₹60,000</p>
+</div>
+</div>
+</div>
+<!-- Decorative Pattern -->
+<div class="absolute right-[-20px] top-[-20px] opacity-10">
+<span class="material-symbols-outlined text-[120px]">account_balance_wallet</span>
+</div>
+</div>
+<!-- Search & Filters -->
+<div class="space-y-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" placeholder="Search by name, village, or mobile" type="text"/>
+</div>
+<div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+<button class="flex items-center gap-1 px-4 py-2 bg-primary text-white rounded-full text-sm font-medium shrink-0">
+                    All Villages
+                </button>
+<button class="flex items-center gap-1 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full text-sm font-medium shrink-0">
+                    High Debt <span class="material-symbols-outlined text-sm">expand_more</span>
+</button>
+<button class="flex items-center gap-1 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full text-sm font-medium shrink-0">
+                    Recent <span class="material-symbols-outlined text-sm">calendar_today</span>
+</button>
+<button class="flex items-center gap-1 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full text-sm font-medium shrink-0">
+                    Sort <span class="material-symbols-outlined text-sm">sort</span>
+</button>
+</div>
+</div>
+<!-- Farmer List -->
+<div class="space-y-3">
+<p class="text-sm font-semibold text-slate-500 dark:text-slate-400 px-1">42 Farmers found</p>
+<!-- Farmer Card 1 (Debt) -->
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-3">
+<div class="flex gap-3">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
+                            RM
+                        </div>
+<div>
+<h3 class="font-bold text-slate-900 dark:text-slate-100">Rajesh Meena</h3>
+<p class="text-sm text-slate-500">Village: Rampura • +91 98765 43210</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-xs text-slate-400 uppercase font-semibold">Net Balance</p>
+<p class="text-lg font-bold text-debt-red">₹14,500 DR</p>
+</div>
+</div>
+<div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-3 mt-3">
+<span class="text-xs text-slate-400">Last: 12 Oct 2023</span>
+<div class="flex gap-2">
+<button class="flex items-center justify-center w-10 h-10 rounded-lg bg-green-500 text-white hover:bg-green-600">
+<span class="material-symbols-outlined">chat</span>
+</button>
+<button class="px-4 py-2 rounded-lg bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-colors">
+                            View Details
+                        </button>
+</div>
+</div>
+</div>
+<!-- Farmer Card 2 (Credit) -->
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-3">
+<div class="flex gap-3">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
+                            SK
+                        </div>
+<div>
+<h3 class="font-bold text-slate-900 dark:text-slate-100">Suresh Kumar</h3>
+<p class="text-sm text-slate-500">Village: Gopalpur • +91 91234 56789</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-xs text-slate-400 uppercase font-semibold">Net Balance</p>
+<p class="text-lg font-bold text-credit-green">₹2,400 CR</p>
+</div>
+</div>
+<div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-3 mt-3">
+<span class="text-xs text-slate-400">Last: 08 Oct 2023</span>
+<div class="flex gap-2">
+<button class="flex items-center justify-center w-10 h-10 rounded-lg bg-green-500 text-white hover:bg-green-600">
+<span class="material-symbols-outlined">chat</span>
+</button>
+<button class="px-4 py-2 rounded-lg bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-colors">
+                            View Details
+                        </button>
+</div>
+</div>
+</div>
+<!-- Farmer Card 3 (High Debt) -->
+<div class="bg-white dark:bg-slate-900 border-2 border-debt-red/20 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-3">
+<div class="flex gap-3">
+<div class="w-12 h-12 rounded-full bg-debt-red/10 flex items-center justify-center text-debt-red font-bold text-lg">
+                            BP
+                        </div>
+<div>
+<h3 class="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                                Bhanu Pratap
+                                <span class="bg-debt-red/10 text-debt-red text-[10px] px-1.5 py-0.5 rounded uppercase">Critical</span>
+</h3>
+<p class="text-sm text-slate-500">Village: Rampura • +91 99887 76655</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-xs text-slate-400 uppercase font-semibold">Net Balance</p>
+<p class="text-lg font-bold text-debt-red">₹84,200 DR</p>
+</div>
+</div>
+<div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-3 mt-3">
+<span class="text-xs text-slate-400">Last: 2 days ago</span>
+<div class="flex gap-2">
+<button class="flex items-center justify-center w-10 h-10 rounded-lg bg-green-500 text-white hover:bg-green-600">
+<span class="material-symbols-outlined">chat</span>
+</button>
+<button class="px-4 py-2 rounded-lg bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-colors">
+                            View Details
+                        </button>
+</div>
+</div>
+</div>
+<!-- More List Items... -->
+<div class="flex justify-center py-4">
+<button class="text-primary font-bold text-sm hover:underline">Show 39 more farmers</button>
+</div>
+</div>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-6 py-2 flex justify-between items-center z-50">
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined font-variation-fill">menu_book</span>
+<span class="text-[10px] font-bold">Ledger</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="text-[10px] font-medium">Inventory</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="text-[10px] font-medium">Farmers</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-[10px] font-medium">Reports</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-medium">Settings</span>
+</a>
+</nav>
+</body></html>

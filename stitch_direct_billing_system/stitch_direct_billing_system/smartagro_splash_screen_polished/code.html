@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SmartAgro Splash Screen</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#16a34a",
+                        "background-light": "#f8fcf9",
+                        "background-dark": "#051109",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Public Sans', sans-serif;
+        }
+        .agri-pattern {
+            background-image: radial-gradient(circle at 2px 2px, rgba(22, 163, 74, 0.05) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display flex items-center justify-center min-h-screen overflow-hidden">
+<div class="relative flex h-screen w-full flex-col items-center justify-center agri-pattern p-6">
+<!-- Background Accents -->
+<div class="absolute top-[-10%] left-[-10%] w-64 h-64 bg-primary/10 rounded-full blur-3xl"></div>
+<div class="absolute bottom-[-5%] right-[-5%] w-80 h-80 bg-primary/5 rounded-full blur-3xl"></div>
+<div class="flex flex-col items-center max-w-md w-full">
+<!-- Hero Image / Logo Area -->
+<div class="w-full @container mb-12">
+<div class="@[480px]:px-4">
+<div class="w-full bg-center bg-no-repeat bg-cover flex flex-col items-center justify-center overflow-hidden rounded-3xl min-h-80 shadow-2xl shadow-primary/20 border border-primary/10" data-alt="Lush green rows of crops in a sustainable farm field" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBMDbdbfgXjsM2pq9NBM1qBLd71RUSj2BP7SGxwunWHeUzhiUKMwImryizKZO4FIZ_qAEMTrJ2W6N3J1ToKur0NxPSkoIXiX_SSNYbYTwGLdU4HodftXUFfpPdGA30S-XQJgFEm1bLKLBNKUpj8tWQMVpU_OxW-E8AbWR_1pSSULMQZYZ7rYtzRjJapmEnNFD5iOdz9iFR6SANcd_JQ23cAwHznCfex-GSHZeYXSYC0Rtq5G0URpf4rrajjurMHkJLrSPYNKrRVrsOB");'>
+<!-- Overlay Glassmorphism for Logo -->
+<div class="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20 flex flex-col items-center">
+<span class="material-symbols-outlined text-white text-6xl mb-2" style="font-variation-settings: 'FILL' 1">eco</span>
+<h2 class="text-white text-3xl font-bold leading-tight tracking-[-0.015em] text-center">SmartAgro</h2>
+</div>
+</div>
+</div>
+</div>
+<!-- Content Area -->
+<div class="text-center space-y-2">
+<h1 class="text-slate-900 dark:text-slate-100 tracking-tight text-4xl font-bold leading-tight">SmartAgro</h1>
+<div class="flex items-center justify-center gap-2">
+<span class="text-primary/80 text-sm font-semibold tracking-widest uppercase">Precision Farming</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-normal pt-4">
+                    Powered by <span class="font-bold text-primary dark:text-primary">Gemini AI</span>
+</p>
+</div>
+<!-- Loading Indicator -->
+<div class="w-full max-w-xs mt-12 flex flex-col gap-4">
+<div class="flex justify-between items-center px-1">
+<p class="text-slate-600 dark:text-slate-400 text-sm font-medium leading-normal italic">Optimizing harvest insights...</p>
+<span class="text-primary text-xs font-bold">68%</span>
+</div>
+<div class="w-full h-1.5 rounded-full bg-primary/10 dark:bg-primary/20 overflow-hidden">
+<div class="h-full rounded-full bg-primary" style="width: 68%;"></div>
+</div>
+</div>
+<!-- Footer Meta -->
+<div class="absolute bottom-10 flex flex-col items-center gap-1">
+<p class="text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-[0.2em]">Next Gen Agricultural Intelligence</p>
+<div class="flex gap-4 mt-2">
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-lg">potted_plant</span>
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-lg">wb_sunny</span>
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-lg">water_drop</span>
+</div>
+</div>
+</div>
+</div>
+</body></html>
