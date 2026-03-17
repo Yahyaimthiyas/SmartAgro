@@ -13,18 +13,12 @@ class OwnerFarmersScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
+        centerTitle: false,
         title: Text(
           LocalizationService.tr('owner_title_farmers'),
-          style: GoogleFonts.notoSansTamil(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -32,10 +26,10 @@ class OwnerFarmersScreen extends StatelessWidget {
           MaterialPageRoute(builder: (_) => const OwnerCreateCustomerScreen()),
         ),
         backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.person_add, color: Colors.white),
+        icon: const Icon(Icons.person_add_rounded, color: Colors.white),
         label: Text(
           LocalizationService.isTamil ? 'புதிய விவசாயி' : 'Add Customer',
-          style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, color: Colors.white),
+          style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.white),
         ),
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -57,18 +51,19 @@ class OwnerFarmersScreen extends StatelessWidget {
                     Container(
                        padding: const EdgeInsets.all(24),
                        decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.05),
+                          color: AppColors.primaryLight,
                           shape: BoxShape.circle,
                        ),
-                       child: const Icon(Icons.people_outline, size: 48, color: Colors.green),
+                       child: const Icon(Icons.people_outline_rounded, size: 48, color: AppColors.primary),
                     ),
                     const SizedBox(height: 16),
                     Text(
                       LocalizationService.tr('owner_farmers_empty'),
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.notoSansTamil(
+                      style: GoogleFonts.inter(
                         fontSize: 16,
                         color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                  ],
@@ -79,7 +74,7 @@ class OwnerFarmersScreen extends StatelessWidget {
           return ListView.separated(
             padding: const EdgeInsets.all(20),
             itemCount: docs.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 16),
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final doc = docs[index];
               final data = doc.data();
@@ -89,83 +84,73 @@ class OwnerFarmersScreen extends StatelessWidget {
 
               final displayName = name?.isNotEmpty == true ? name! : phone;
 
-              return InkWell(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => OwnerFarmerDetailsScreen(userId: id),
+              return Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.borderLight),
+                ),
+                child: InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => OwnerFarmerDetailsScreen(userId: id),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryContainer,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                             child: Text(
+                                displayName.substring(0, 1).toUpperCase(),
+                                style: GoogleFonts.outfit(
+                                   fontSize: 22,
+                                   fontWeight: FontWeight.bold,
+                                   color: AppColors.primary
+                                ),
+                             )
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                displayName,
+                                style: GoogleFonts.outfit(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              if (phone.isNotEmpty)
+                                Text(
+                                  phone,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              const SizedBox(height: 8),
+                              _FarmerBalancePreview(userId: id),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right_rounded, color: AppColors.textPlaceholder),
+                      ],
                     ),
-                  );
-                },
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                       BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4)
-                       )
-                    ]
-                  ),
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child:  Center(
-                           child: Text(
-                              displayName.substring(0, 1).toUpperCase(),
-                              style: GoogleFonts.poppins(
-                                 fontSize: 24,
-                                 fontWeight: FontWeight.bold,
-                                 color: AppColors.primary
-                              ),
-                           )
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              displayName,
-                              style: GoogleFonts.notoSansTamil(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            if (phone.isNotEmpty)
-                              Row(
-                                 children: [
-                                    const Icon(Icons.phone_outlined, size: 14, color: AppColors.textSecondary),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      phone,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 13,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                 ],
-                              ),
-                            const SizedBox(height: 8),
-                            _FarmerBalancePreview(userId: id),
-                          ],
-                        ),
-                      ),
-                      const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-                    ],
                   ),
                 ),
               );
@@ -191,11 +176,7 @@ class _FarmerBalancePreview extends StatelessWidget {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox(
-            height: 16,
-            width: 16,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          );
+          return const SizedBox(height: 2);
         }
 
         final docs = snapshot.data?.docs ?? [];
@@ -215,10 +196,10 @@ class _FarmerBalancePreview extends StatelessWidget {
         Color color;
         if (balance > 0) {
           label = LocalizationService.tr('owner_farmers_balance_positive');
-          color = Colors.red;
+          color = AppColors.error;
         } else if (balance < 0) {
           label = LocalizationService.tr('owner_farmers_balance_negative');
-          color = Colors.green;
+          color = AppColors.success;
         } else {
           label = LocalizationService.tr('owner_farmers_balance_zero');
           color = AppColors.textSecondary;
@@ -227,15 +208,15 @@ class _FarmerBalancePreview extends StatelessWidget {
         final absBalance = balance.abs().toStringAsFixed(0);
 
         return Container(
-           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
            decoration: BoxDecoration(
               color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8)
+              borderRadius: BorderRadius.circular(20)
            ),
            child: Text(
              '$label: ₹$absBalance',
-             style: GoogleFonts.notoSansTamil(
-               fontSize: 12,
+             style: GoogleFonts.inter(
+               fontSize: 11,
                fontWeight: FontWeight.bold,
                color: color,
              ),

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:fl_chart/fl_chart.dart';
 
 import '../../../core/constants/colors.dart';
 import '../../../core/services/localization_service.dart';
+import 'package:animate_do/animate_do.dart';
 import '../alerts/owner_alerts_screen.dart';
 import '../farmers/owner_farmers_screen.dart';
 import '../orders/owner_orders_screen.dart';
@@ -29,7 +31,7 @@ class OwnerDashboardScreen extends StatelessWidget {
     final userName = user?.displayName ?? (LocalizationService.isTamil ? 'உரிமையாளர்' : 'Owner');
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA), // Very light grey-blue background
+      backgroundColor: AppColors.background,
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: FirebaseFirestore.instance
             .collection('orders')
@@ -75,8 +77,6 @@ class OwnerDashboardScreen extends StatelessWidget {
                       const SizedBox(height: 24),
                       const _DeadStockSection(), // [NEW]
                       const SizedBox(height: 24),
-                      const _VillageSalesSection(), // [NEW]
-                      const SizedBox(height: 24),
                       const _TopFarmersRankingSection(), // [NEW]
                       const SizedBox(height: 24),
                       const _FarmerCropDistributionSection(), // [NEW]
@@ -113,61 +113,83 @@ class OwnerDashboardScreen extends StatelessWidget {
   }
 
   SliverAppBar _buildAppBar(BuildContext context, String userName) {
-    final now = DateTime.now();
-    final formattedDate = DateFormat('EEEE, d MMM').format(now);
-
     return SliverAppBar(
       backgroundColor: AppColors.background,
       elevation: 0,
       pinned: true,
-      expandedHeight: 130.0,
+      expandedHeight: 120.0,
       centerTitle: false,
+      leadingWidth: 72,
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 16),
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight,
+              shape: BoxShape.circle,
+            ),
+            child: CircleAvatar(
+              backgroundColor: Colors.white,
+              radius: 20,
+              child: const Icon(Icons.person_rounded, color: AppColors.primary, size: 24),
+            ),
+          ),
+        ),
+      ),
       flexibleSpace: FlexibleSpaceBar(
-        background: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 60, 20, 0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    LocalizationService.tr('welcome'),
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    userName,
-                    style: GoogleFonts.outfit(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ],
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            Opacity(
+              opacity: 0.1,
+              child: Image.file(
+                File(r'C:\Users\SANJAI\.gemini\antigravity\brain\915e6d9b-7013-4b4f-bcfd-1d44322ca841\owner_dashboard_bg_1773756097249.png'),
+                fit: BoxFit.cover,
               ),
-              Row(
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 48, 20, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   _AppBarIconButton(
                     icon: Icons.notifications_none_rounded,
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerNotificationScreen())),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   _AppBarIconButton(
                     icon: Icons.settings_outlined,
                     onTap: () => Navigator.pushNamed(context, '/owner-settings'),
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'SmartAgro',
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              color: AppColors.primary,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
+            ),
+          ),
+          Text(
+            userName,
+            style: GoogleFonts.outfit(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -234,7 +256,7 @@ class _SectionTitle extends StatelessWidget {
                 action!,
                 style: GoogleFonts.inter(
                   fontSize: 12,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.bold,
                   color: AppColors.primary,
                 ),
               ),
@@ -283,19 +305,15 @@ class _RevenueCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(32),
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, Color(0xFF00332B)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.35),
-            blurRadius: 25,
-            offset: const Offset(0, 12),
+            color: AppColors.primary.withOpacity(0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -305,57 +323,69 @@ class _RevenueCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-               Column(
-                 crossAxisAlignment: CrossAxisAlignment.start,
-                 children: [
-                    Text(
-                      isTa ? 'இன்றைய விற்பனை' : "TODAY'S SALES",
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white.withOpacity(0.6),
-                        letterSpacing: 1.5,
-                      ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isTa ? 'இன்றைய விற்பனை' : "TODAY'S SALES",
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white.withOpacity(0.8),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '₹${todayRevenue.toStringAsFixed(0)}',
-                      style: GoogleFonts.outfit(
-                        fontSize: 40,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '₹${todayRevenue.toStringAsFixed(0)}',
+                    style: GoogleFonts.outfit(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
-                 ],
-               ),
-               Container(
-                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                 decoration: BoxDecoration(
-                   color: AppColors.accent,
-                   borderRadius: BorderRadius.circular(12),
-                 ),
-                 child: Text(
-                   '$todayOrders Bills',
-                   style: GoogleFonts.inter(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5),
-                 ),
-               ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.receipt_long_rounded, color: Colors.white, size: 14),
+                    const SizedBox(width: 6),
+                    Text(
+                      '$todayOrders Bills',
+                      style: GoogleFonts.inter(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 32),
-          Row(
-            children: [
-              _RevenueStat(
-                label: isTa ? 'மாதாந்திர விற்பனை' : 'Monthly',
-                value: '₹${monthlyRevenue.toStringAsFixed(0)}',
-                icon: Icons.auto_graph_rounded,
-              ),
-              const Spacer(),
-              _RevenueStat(
-                label: isTa ? 'மதிப்பிடப்பட்ட லாபம்' : 'Profit',
-                value: '₹${(todayRevenue * 0.15).toStringAsFixed(0)}',
-                icon: Icons.toll_rounded,
-              ),
-            ],
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                _RevenueStat(
+                  label: isTa ? 'மாதாந்திர விற்பனை' : 'Monthly',
+                  value: '₹${monthlyRevenue.toStringAsFixed(0)}',
+                ),
+                const Spacer(),
+                Container(width: 1, height: 30, color: Colors.white.withOpacity(0.2)),
+                const Spacer(),
+                _RevenueStat(
+                  label: isTa ? 'மதிப்பிடப்பட்ட லாபம்' : 'Profit',
+                  value: '₹${(todayRevenue * 0.15).toStringAsFixed(0)}',
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -366,40 +396,29 @@ class _RevenueCard extends StatelessWidget {
 class _RevenueStat extends StatelessWidget {
   final String label;
   final String value;
-  final IconData icon;
 
-  const _RevenueStat({required this.label, required this.value, required this.icon});
+  const _RevenueStat({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-           padding: const EdgeInsets.all(8),
-           decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-           child: Icon(icon, color: AppColors.accent, size: 16),
+        Text(
+          value,
+          style: GoogleFonts.outfit(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              value,
-              style: GoogleFonts.outfit(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            Text(
-              label, 
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                color: Colors.white.withOpacity(0.6),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+        Text(
+          label, 
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            color: Colors.white.withOpacity(0.7),
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     );
@@ -411,75 +430,69 @@ class _QuickActionsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Row(
-        children: [
-          _QuickActionTile(
-            icon: Icons.receipt_long,
-            label: LocalizationService.tr('owner_nav_billing'),
-            color: Colors.green,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerDirectBillingScreen())),
-          ),
-          const SizedBox(width: 12),
-          _QuickActionTile(
-            icon: Icons.add_circle_outline,
-            label: LocalizationService.tr('owner_action_product'),
-            color: Colors.blue,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => OwnerEditProductScreen())),
-          ),
-          const SizedBox(width: 12),
-          _QuickActionTile(
-            icon: Icons.inventory_2_outlined,
-            label: LocalizationService.tr('owner_action_stock'),
-            color: Colors.orange,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerStockScreen())),
-          ),
-          const SizedBox(width: 12),
-          _QuickActionTile(
-            icon: Icons.medical_services_outlined,
-            label: LocalizationService.isTamil ? 'நோய் மேலாண்மை' : 'Diseases',
-            color: Colors.red,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerDiseaseManagementScreen())),
-          ),
-          const SizedBox(width: 12),
-          _QuickActionTile(
-            icon: Icons.menu_book_outlined,
-            label: LocalizationService.isTamil ? 'பயிர் வழிகாட்டி' : 'Crop Guides',
-            color: Colors.teal,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerCropGuideScreen())),
-          ),
-          const SizedBox(width: 12),
-          _QuickActionTile(
-            icon: Icons.people_outline,
-            label: LocalizationService.tr('owner_action_farmers'),
-            color: Colors.purple,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerFarmersScreen())),
-          ),
-          const SizedBox(width: 12),
-          _QuickActionTile(
-            icon: Icons.business,
-            label: LocalizationService.isTamil ? 'விற்பனையாளர்கள்' : 'Suppliers',
-            color: Colors.brown,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerSuppliersScreen())),
-          ),
-          const SizedBox(width: 12),
-          _QuickActionTile(
-            icon: Icons.assignment_outlined,
-            label: LocalizationService.isTamil ? 'தேவைகள்' : 'Demand',
-            color: Colors.indigo,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerProductDemandScreen())),
-          ),
-          const SizedBox(width: 12),
-          _QuickActionTile(
-            icon: Icons.bar_chart,
-            label: LocalizationService.tr('owner_action_reports'),
-            color: Colors.teal,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerReportsScreen())),
-          ),
-        ],
-      ),
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 3,
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 0.95,
+      children: [
+        _QuickActionTile(
+          icon: Icons.receipt_long,
+          label: LocalizationService.tr('owner_nav_billing'),
+          color: Colors.blue,
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerDirectBillingScreen())),
+        ),
+        _QuickActionTile(
+          icon: Icons.add_circle_outline,
+          label: LocalizationService.tr('owner_action_product'),
+          color: Colors.green,
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => OwnerEditProductScreen())),
+        ),
+        _QuickActionTile(
+          icon: Icons.inventory_2_outlined,
+          label: LocalizationService.tr('owner_action_stock'),
+          color: Colors.orange,
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerStockScreen())),
+        ),
+        _QuickActionTile(
+          icon: Icons.medical_services_outlined,
+          label: LocalizationService.isTamil ? 'நோய் மேலாண்மை' : 'Diseases',
+          color: Colors.red,
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerDiseaseManagementScreen())),
+        ),
+        _QuickActionTile(
+          icon: Icons.menu_book_outlined,
+          label: LocalizationService.isTamil ? 'பயிர் வழிகாட்டி' : 'Crop Guides',
+          color: Colors.teal,
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerCropGuideScreen())),
+        ),
+        _QuickActionTile(
+          icon: Icons.groups_outlined,
+          label: LocalizationService.tr('owner_action_farmers'),
+          color: Colors.purple,
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerFarmersScreen())),
+        ),
+        _QuickActionTile(
+          icon: Icons.business_outlined,
+          label: LocalizationService.isTamil ? 'விற்பனையாளர்கள்' : 'Suppliers',
+          color: Colors.brown,
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerSuppliersScreen())),
+        ),
+        _QuickActionTile(
+          icon: Icons.trending_up_rounded,
+          label: LocalizationService.isTamil ? 'தேவைகள்' : 'Demand',
+          color: Colors.indigo,
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerProductDemandScreen())),
+        ),
+        _QuickActionTile(
+          icon: Icons.assignment_outlined,
+          label: LocalizationService.tr('owner_action_reports'),
+          color: Colors.deepPurple,
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerReportsScreen())),
+        ),
+      ],
     );
   }
 }
@@ -490,31 +503,29 @@ class _QuickActionTile extends StatelessWidget {
   final Color color;
   final VoidCallback onTap;
 
-  const _QuickActionTile({required this.icon, required this.label, required this.color, required this.onTap});
+  const _QuickActionTile({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        width: 90, 
-        height: 100,
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.borderLight),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: color.withOpacity(0.1),
                 shape: BoxShape.circle,
@@ -525,11 +536,13 @@ class _QuickActionTile extends StatelessWidget {
             Text(
               label,
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.inter(
                 fontSize: 11,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -704,33 +717,43 @@ class _StockSummaryCard extends StatelessWidget {
         for (var doc in docs) {
           final s = (doc.data()['stock'] as num? ?? 0).toInt();
           if (s <= 0) out++;
-          else if (s <= 3) low++;
+          else if (s <= 5) low++;
         }
 
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.grey.shade100),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _MiniStat(
-                 label: LocalizationService.tr('owner_stock_low'),
-                value: "$low",
-                color: Colors.orange,
-                icon: Icons.warning_amber_rounded,
-              ),
-              Container(width: 1, height: 40, color: Colors.grey.shade200),
-              _MiniStat(
-                label: LocalizationService.tr('owner_stock_out'),
-                value: "$out",
-                color: Colors.red,
-                icon: Icons.remove_circle_outline,
-              ),
-            ],
+         return InkWell(
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerStockScreen())),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.grey.shade100),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.01),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _MiniStat(
+                   label: LocalizationService.tr('owner_stock_low'),
+                  value: "$low",
+                  color: Colors.orange,
+                  icon: Icons.warning_amber_rounded,
+                ),
+                Container(width: 1, height: 40, color: Colors.grey.shade200),
+                _MiniStat(
+                  label: LocalizationService.tr('owner_stock_out'),
+                  value: "$out",
+                  color: Colors.red,
+                  icon: Icons.remove_circle_outline,
+                ),
+              ],
+            ),
           ),
         );
       }
@@ -758,18 +781,19 @@ class _CreditSummaryCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: const Color(0xFF263238), // Dark Grey
-            borderRadius: BorderRadius.circular(20),
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.borderLight),
           ),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
+                  color: AppColors.primaryLight,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.account_balance_wallet, color: Colors.white),
+                child: const Icon(Icons.account_balance_wallet_rounded, color: AppColors.primary),
               ),
               const SizedBox(width: 16),
               Column(
@@ -777,12 +801,12 @@ class _CreditSummaryCard extends StatelessWidget {
                 children: [
                   Text(
                     LocalizationService.tr('owner_credit_balance'),
-                    style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12),
+                    style: GoogleFonts.inter(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
                   ),
                   Text(
                     "₹${balance.abs().toStringAsFixed(0)}",
-                    style: GoogleFonts.notoSansTamil(
-                      color: Colors.white,
+                    style: GoogleFonts.outfit(
+                      color: AppColors.textPrimary,
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
@@ -791,12 +815,20 @@ class _CreditSummaryCard extends StatelessWidget {
               ),
               const Spacer(),
               if (balance != 0)
-                Chip(
-                  label: Text(
-                    balance > 0 ? (LocalizationService.isTamil ? 'நிலுவை' : 'Outstanding') : (LocalizationService.isTamil ? 'முன்பணம்' : 'Advance'),
-                    style: const TextStyle(color: Colors.white, fontSize: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: (balance > 0 ? AppColors.error : AppColors.success).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  backgroundColor: balance > 0 ? Colors.red : Colors.green,
+                  child: Text(
+                    balance > 0 ? (LocalizationService.isTamil ? 'நிலுவை' : 'Outstanding') : (LocalizationService.isTamil ? 'முன்பணம்' : 'Advance'),
+                    style: GoogleFonts.inter(
+                      color: balance > 0 ? AppColors.error : AppColors.success,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -818,11 +850,18 @@ class _MiniStat extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: color, size: 24),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 18),
+        ),
         const SizedBox(height: 8),
         Text(
           value,
-          style: GoogleFonts.notoSansTamil(
+          style: GoogleFonts.outfit(
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
@@ -830,7 +869,7 @@ class _MiniStat extends StatelessWidget {
         ),
         Text(
           label,
-          style: GoogleFonts.poppins(fontSize: 12, color: AppColors.textSecondary),
+          style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
         ),
       ],
     );
@@ -899,20 +938,15 @@ class _RevenueChartCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Prepare Data: Last 7 days
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final map = <int, double>{}; // Day Index (0-6) -> Revenue
+    final map = <int, double>{};
 
-    for (int i = 0; i < 7; i++) {
-      map[i] = 0;
-    }
+    for (int i = 0; i < 7; i++) map[i] = 0;
 
     for (final doc in orders) {
       final data = doc.data();
-      final status = data['status'] as String? ?? 'reserved';
-      if (status == 'cancelled') continue;
-
+      if ((data['status'] as String? ?? 'reserved') == 'cancelled') continue;
       final ts = (data['createdAt'] as Timestamp?)?.toDate();
       if (ts == null) continue;
 
@@ -920,115 +954,108 @@ class _RevenueChartCard extends StatelessWidget {
       final diff = today.difference(date).inDays;
 
       if (diff >= 0 && diff < 7) {
-        final amt = (data['totalAmount'] as num? ?? 0).toDouble();
-        // Index 6 is Today, 0 is 6 days ago in chart X-axis usually.
-        // Let's map 0..6 where 6 is Today.
         final index = 6 - diff;
-        map[index] = (map[index] ?? 0) + amt;
+        map[index] = (map[index] ?? 0) + (data['totalAmount'] as num? ?? 0).toDouble();
       }
     }
 
-    final spots = <FlSpot>[];
     double maxRevenue = 0;
     for (int i = 0; i < 7; i++) {
-      final val = map[i] ?? 0;
-      if (val > maxRevenue) maxRevenue = val;
-      spots.add(FlSpot(i.toDouble(), val));
+      if (map[i]! > maxRevenue) maxRevenue = map[i]!;
     }
-
-    if (maxRevenue == 0) maxRevenue = 100; // Default scale
+    if (maxRevenue == 0) maxRevenue = 1000;
 
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        border: Border.all(color: AppColors.borderLight),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            LocalizationService.tr('owner_revenue_trend'),
-            style: GoogleFonts.notoSansTamil(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                   Text(
+                    LocalizationService.tr('owner_revenue_trend'),
+                    style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                  ),
+                  Text(
+                    LocalizationService.tr('owner_last_7_days'),
+                    style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: AppColors.primaryLight, shape: BoxShape.circle),
+                child: const Icon(Icons.trending_up_rounded, color: AppColors.primary, size: 20),
+              ),
+            ],
           ),
-          Text(
-            LocalizationService.tr('owner_last_7_days'),
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
           AspectRatio(
-            aspectRatio: 1.70,
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(show: false),
+            aspectRatio: 1.8,
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                maxY: maxRevenue * 1.2,
+                barTouchData: BarTouchData(
+                  touchTooltipData: BarTouchTooltipData(
+                    getTooltipColor: (_) => AppColors.textPrimary,
+                    tooltipRoundedRadius: 8,
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      return BarTooltipItem(
+                        '₹${rod.toY.toInt()}',
+                        GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                      );
+                    },
+                  ),
+                ),
                 titlesData: FlTitlesData(
                   show: true,
-                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      reservedSize: 30,
-                      interval: 1,
+                      reservedSize: 32,
                       getTitlesWidget: (value, meta) {
                         final index = value.toInt();
-                        // 6 means Today.
                         final day = today.subtract(Duration(days: 6 - index));
                         return SideTitleWidget(
                           axisSide: meta.axisSide,
+                          space: 10,
                           child: Text(
-                            DateFormat('E').format(day)[0], // M, T, W...
-                            style: GoogleFonts.poppins(
-                                color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 12),
+                            DateFormat('E').format(day)[0],
+                            style: GoogleFonts.inter(color: AppColors.textPlaceholder, fontSize: 12, fontWeight: FontWeight.bold),
                           ),
                         );
                       },
                     ),
                   ),
                   leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 ),
+                gridData: FlGridData(show: false),
                 borderData: FlBorderData(show: false),
-                minX: 0,
-                maxX: 6,
-                minY: 0,
-                maxY: maxRevenue * 1.2,
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: spots,
-                    isCurved: true,
-                    gradient: const LinearGradient(
-                      colors: [AppColors.primary, Color(0xFF66BB6A)],
-                    ),
-                    barWidth: 4,
-                    isStrokeCapRound: true,
-                    dotData: FlDotData(show: false),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.primary.withOpacity(0.3),
-                          AppColors.primary.withOpacity(0.0),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                  ),
-                ],
+                barGroups: List.generate(7, (i) {
+                  return BarChartGroupData(
+                    x: i,
+                    barRods: [
+                      BarChartRodData(
+                        toY: map[i]!,
+                        color: i == 6 ? AppColors.primary : AppColors.primaryLight,
+                        width: 22,
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                      )
+                    ],
+                  );
+                }),
               ),
             ),
           ),
@@ -1058,11 +1085,11 @@ class _StockAlertsSection extends StatelessWidget {
             _SectionTitle(
               title: isTa ? 'குறைந்த அளவு இருப்பு' : 'Low Stock Alerts',
               action: LocalizationService.tr('view_all'),
-              onActionTap: () => Navigator.pushNamed(context, '/owner-stock'),
+              onActionTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerStockScreen())),
             ),
             const SizedBox(height: 12),
             SizedBox(
-              height: 120,
+              height: 140,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
@@ -1072,36 +1099,62 @@ class _StockAlertsSection extends StatelessWidget {
                   final stock = data['stock'] as int;
                   final name = LocalizationService.pickTaEn(data['name_ta'], data['name_en']);
                   
-                  return Container(
-                    width: 160,
-                    margin: const EdgeInsets.only(right: 12),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.shade50,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.orange.shade100),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          name,
-                          style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, fontSize: 13),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const Spacer(),
-                        Row(
-                          children: [
-                            Icon(Icons.warning_amber_rounded, size: 14, color: Colors.orange.shade800),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Stock: $stock',
-                              style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.orange.shade800),
+                  return InkWell(
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerStockScreen())),
+                    child: Container(
+                      width: 180,
+                      margin: const EdgeInsets.only(right: 16, bottom: 8, top: 4),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.orange.withOpacity(0.08),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          )
+                        ],
+                        border: Border.all(color: Colors.orange.shade100),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: stock == 0 ? Colors.red.shade50 : Colors.orange.shade50,
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          ],
-                        ),
-                      ],
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  stock == 0 ? Icons.remove_circle_outline : Icons.warning_amber_rounded, 
+                                  size: 14, 
+                                  color: stock == 0 ? Colors.red : Colors.orange.shade800
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  stock == 0 ? (isTa ? 'காலி' : 'Out') : 'Low: $stock',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11, 
+                                    fontWeight: FontWeight.bold, 
+                                    color: stock == 0 ? Colors.red : Colors.orange.shade800
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -1460,44 +1513,75 @@ class _WeatherAdvisory extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isTa = LocalizationService.isTamil;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE3F2FD),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.blue.shade100),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.wb_sunny_rounded, color: Colors.orange, size: 32),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isTa ? 'இன்றைய வானிலை: 32°C' : 'Today\'s Weather: 32°C',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blue.shade900),
-                ),
-                Text(
-                  isTa 
-                    ? 'மிதமான வெப்பம். தக்காளி செடிகளுக்கு அதிக நீர் பாய்ச்சவும்.' 
-                    : 'Mild heat. Increase irrigation for Tomato crops.',
-                  style: GoogleFonts.notoSansTamil(fontSize: 11, color: Colors.blue.shade700),
-                ),
-              ],
-            ),
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('alerts')
+          .where('type', isEqualTo: 'weather')
+          .orderBy('createdAt', descending: true)
+          .limit(1)
+          .snapshots(),
+      builder: (context, snapshot) {
+        final alertDoc = snapshot.data?.docs.firstOrNull;
+        
+        String title = isTa ? 'வானிலை அறிக்கை' : 'Weather Advisory';
+        String desc = isTa 
+            ? 'இன்று வானிலை சாதாரணமாக இருக்கும். வழக்கம்போல் பணிகளைத் தொடரவும்.' 
+            : 'Weather is normal today. Continue your regular activities.';
+        IconData icon = Icons.wb_sunny_rounded;
+        Color iconColor = Colors.orange;
+
+        if (alertDoc != null) {
+          final data = alertDoc.data();
+          title = LocalizationService.pickTaEn(data['title_ta'], data['title_en']);
+          desc = LocalizationService.pickTaEn(data['description_ta'], data['description_en']);
+          final urgency = data['urgency'] as String?;
+          if (urgency == 'high' || urgency == 'immediate') {
+            icon = Icons.warning_rounded;
+            iconColor = Colors.red;
+          }
+        }
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: iconColor.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: iconColor.withOpacity(0.1)),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
-            child: Text(
-              isTa ? 'சன்னி' : 'Sunny',
-              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.orange),
-            ),
-          )
-        ],
-      ),
+          child: Row(
+            children: [
+              Icon(icon, color: iconColor, size: 32),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13, color: iconColor.withOpacity(0.8)),
+                    ),
+                    Text(
+                      desc,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.notoSansTamil(fontSize: 11, color: Colors.grey.shade700),
+                    ),
+                  ],
+                ),
+              ),
+              if (alertDoc == null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
+                  child: Text(
+                    isTa ? 'சாதாரணமான' : 'Normal',
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.green),
+                  ),
+                )
+            ],
+          ),
+        );
+      }
     );
   }
 }
@@ -1522,8 +1606,12 @@ class _DeadStockSection extends StatelessWidget {
         if (!snapshot.hasData) return const SizedBox.shrink();
 
         final deadStockDocs = snapshot.data!.docs.where((doc) {
-          final lastSold = (doc.data()['lastSoldDate'] as Timestamp?)?.toDate();
-          if (lastSold == null) return true; // Never sold is also dead stock
+          final data = doc.data();
+          final stock = (data['stock'] as num? ?? 0).toInt();
+          if (stock <= 5) return false; 
+          
+          final lastSold = (data['lastSoldDate'] as Timestamp?)?.toDate();
+          if (lastSold == null) return true; 
           return lastSold.isBefore(thirtyDaysAgo);
         }).toList();
 
@@ -1535,10 +1623,17 @@ class _DeadStockSection extends StatelessWidget {
             _SectionTitle(title: LocalizationService.tr('owner_dashboard_dead_stock')),
             const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.red.withOpacity(0.05),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  )
+                ],
                 border: Border.all(color: Colors.red.shade50),
               ),
               child: Column(
@@ -1546,14 +1641,33 @@ class _DeadStockSection extends StatelessWidget {
                   final data = doc.data();
                   final name = LocalizationService.pickTaEn(data['name_ta'], data['name_en']);
                   final stock = data['stock'];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(child: Text(name, style: const TextStyle(fontSize: 12))),
-                        Text('${isTa ? "இருப்பு" : "Stock"}: $stock', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.red)),
-                      ],
+                  return InkWell(
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerStockScreen())),
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(color: Colors.red.shade50, shape: BoxShape.circle),
+                            child: const Icon(Icons.inventory_2, color: Colors.red, size: 18),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(name, style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
+                                Text(isTa ? 'விற்பனை மந்தமாக உள்ளது' : 'Slow moving stock', style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary)),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            '${isTa ? "இருப்பு" : "Qty"}: $stock',
+                            style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.red),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 }).toList(),
@@ -1566,97 +1680,6 @@ class _DeadStockSection extends StatelessWidget {
   }
 }
 
-class _VillageSalesSection extends StatelessWidget {
-  const _VillageSalesSection();
-
-  @override
-  Widget build(BuildContext context) {
-    final isTa = LocalizationService.isTamil;
-
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('orders')
-          .orderBy('createdAt', descending: true)
-          .limit(100)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const SizedBox.shrink();
-
-        final Map<String, int> villageCounts = {};
-        for (var doc in snapshot.data!.docs) {
-          final village = doc.data()['customerVillage'] as String? ?? (isTa ? 'தெரியவில்லை' : 'Unknown');
-          if (village.trim().isEmpty) continue;
-          villageCounts[village] = (villageCounts[village] ?? 0) + 1;
-        }
-
-        if (villageCounts.isEmpty) return const SizedBox.shrink();
-
-        final sortedVillages = villageCounts.entries.toList()
-          ..sort((a, b) => b.value.compareTo(a.value));
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _SectionTitle(title: LocalizationService.tr('owner_dashboard_village_sales')),
-            const SizedBox(height: 12),
-            Container(
-              height: 200,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: BarChart(
-                BarChartData(
-                  alignment: BarChartAlignment.spaceAround,
-                  maxY: (sortedVillages.first.value + 2).toDouble(),
-                  barTouchData: BarTouchData(enabled: false),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (value, meta) {
-                          if (value.toInt() >= sortedVillages.length) return const SizedBox.shrink();
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              sortedVillages[value.toInt()].key.split(' ').first,
-                              style: const TextStyle(fontSize: 10),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  ),
-                  gridData: FlGridData(show: false),
-                  borderData: FlBorderData(show: false),
-                  barGroups: List.generate(sortedVillages.take(5).length, (i) {
-                    return BarChartGroupData(
-                      x: i,
-                      barRods: [
-                        BarChartRodData(
-                          toY: sortedVillages[i].value.toDouble(),
-                          color: AppColors.primary,
-                          width: 20,
-                          borderRadius: BorderRadius.circular(4),
-                        )
-                      ],
-                    );
-                  }),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
 
 class _FarmerCropDistributionSection extends StatelessWidget {
   const _FarmerCropDistributionSection();
@@ -1720,15 +1743,13 @@ class _TopProfitProductsSection extends StatelessWidget {
         if (!snapshot.hasData) return const SizedBox.shrink();
 
         final docs = snapshot.data!.docs.toList();
-        // Calculate mock margin for sorting. Higher margin items will be shown here.
         docs.sort((a, b) {
-          final aPrice = (a.data()['price'] as num?)?.toDouble() ?? 0;
-          final bPrice = (b.data()['price'] as num?)?.toDouble() ?? 0;
-          return bPrice.compareTo(aPrice); // Simple sorting by price for demonstration
+          final aMargin = (a.data()['price'] ?? 0) - (a.data()['purchasePrice'] ?? 0);
+          final bMargin = (b.data()['price'] ?? 0) - (b.data()['purchasePrice'] ?? 0);
+          return bMargin.compareTo(aMargin);
         });
 
         if (docs.isEmpty) return const SizedBox.shrink();
-
         final isTa = LocalizationService.isTamil;
 
         return Column(
@@ -1737,24 +1758,45 @@ class _TopProfitProductsSection extends StatelessWidget {
             _SectionTitle(title: LocalizationService.tr('owner_dashboard_top_profit')),
             const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.amber.shade100)),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white, 
+                borderRadius: BorderRadius.circular(24), 
+                border: Border.all(color: Colors.amber.shade100),
+                boxShadow: [
+                  BoxShadow(color: Colors.amber.withOpacity(0.08), blurRadius: 15, offset: const Offset(0, 8))
+                ],
+              ),
               child: Column(
                 children: docs.take(3).map((e) {
                   final data = e.data();
-                  final name = isTa ? (data['name_ta'] ?? data['name_en']) : (data['name_en'] ?? data['name_ta']);
+                  final name = LocalizationService.pickTaEn(data['name_ta'], data['name_en']);
+                  final margin = (data['price'] - (data['purchasePrice'] ?? 0)).toDouble();
+                  
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.only(bottom: 12),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Expanded(child: Text(name, style: const TextStyle(fontWeight: FontWeight.w600))),
-                        Row(
-                          children: [
-                            const Icon(Icons.arrow_upward, color: Colors.green, size: 14),
-                            Text(' ~15%', style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.bold, fontSize: 13)),
-                          ],
-                        )
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(color: Colors.green.shade50, shape: BoxShape.circle),
+                          child: const Icon(Icons.currency_rupee, color: Colors.green, size: 16),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(name, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary)),
+                              Text(isTa ? 'அதிக லாபம்' : 'High Margin', style: GoogleFonts.inter(fontSize: 11, color: Colors.green.shade700)),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          '₹${margin.toStringAsFixed(0)}',
+                          style: GoogleFonts.outfit(color: Colors.green.shade700, fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
                       ],
                     ),
                   );

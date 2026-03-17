@@ -11,6 +11,7 @@ import 'farmer_profile_setup_screen.dart';
 import 'static_content_screen.dart'; // [NEW]
 import 'farmer_security_settings_screen.dart';
 import '../orders/farmer_orders_screen.dart';
+import '../orders/farmer_feedback_history_screen.dart';
 
 class FarmerProfileScreen extends StatelessWidget {
   const FarmerProfileScreen({super.key});
@@ -105,6 +106,19 @@ class FarmerProfileScreen extends StatelessWidget {
                  Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => const FarmerOrdersScreen(),
+                  ),
+                );
+               }
+            ),
+             const SizedBox(height: 16),
+            _buildMenuCard(
+               context, 
+               icon: Icons.rate_review_outlined, 
+               title: LocalizationService.isTamil ? 'எனது கருத்துக்கள்' : 'My Feedbacks',
+               onTap: () {
+                 Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const FarmerFeedbackHistoryScreen(),
                   ),
                 );
                }

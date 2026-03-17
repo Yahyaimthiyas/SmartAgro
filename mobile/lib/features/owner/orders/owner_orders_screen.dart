@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/constants/colors.dart';
 import '../../../core/services/localization_service.dart';
@@ -78,20 +79,18 @@ class _OwnerOrdersScreenState extends State<OwnerOrdersScreen> with SingleTicker
       backgroundColor: const Color(0xFFF4F7F6),
       appBar: AppBar(
         title: Text(
-          LocalizationService.tr('owner_orders_title'),
-          style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+          LocalizationService.isTamil ? 'அனைத்து ஆர்டர்கள்' : 'SmartAgro',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppColors.primary),
         ),
-        backgroundColor: Colors.white,
-        elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(100),
           child: Column(
             children: [
               TabBar(
                 controller: _tabController,
-                indicatorColor: AppColors.primary,
-                labelColor: AppColors.primary,
-                unselectedLabelColor: Colors.grey,
+                indicatorWeight: 3,
+                labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                unselectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w500),
                 tabs: [
                   Tab(text: LocalizationService.isTamil ? 'நடப்பு' : 'Active'),
                   Tab(text: LocalizationService.isTamil ? 'வரலாறு' : 'History'),
@@ -214,7 +213,7 @@ class _OwnerOrdersScreenState extends State<OwnerOrdersScreen> with SingleTicker
           final data = doc.data();
           final status = data['status'] as String? ?? 'reserved';
           final payment = data['paymentMethod'] as String? ?? 'cash';
-          final isOnline = data['isOnline'] ?? true;
+          final isOnline = data['isOnline'] ?? (data['type'] != 'direct_sale');
           final needsAdvice = data['needsDosageAdvice'] == true;
 
           // Tab split
@@ -251,42 +250,110 @@ class _OwnerOrdersScreenState extends State<OwnerOrdersScreen> with SingleTicker
   Widget _buildOrderCard(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     final status = data['status'] as String;
-    final total = data['totalAmount'] as num;
+    final total = (data['totalAmount'] as num).toDouble();
     final payment = data['paymentMethod'] as String;
     final isOnline = data['isOnline'] ?? true;
     final expiry = (data['creditExpiryDate'] as Timestamp?)?.toDate();
+    final ts = (data['createdAt'] as Timestamp?)?.toDate();
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ListTile(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: InkWell(
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => OwnerOrderDetailsScreen(orderId: doc.id))),
-        title: Row(
-          children: [
-            Text('#${doc.id.substring(0, 8).toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(width: 8),
-            if (!isOnline) Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(4)),
-              child: const Text('SHOP', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('₹$total · ${payment.toUpperCase()}'),
-            if (payment == 'credit' && expiry != null)
-              Text(
-                '${LocalizationService.isTamil ? 'காலாவதி' : 'Expires'}: ${expiry.day}/${expiry.month}/${expiry.year}',
-                style: TextStyle(color: Colors.red.shade700, fontSize: 11, fontWeight: FontWeight.bold),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            '#${doc.id.substring(0, 8).toUpperCase()}',
+                            style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          if (!isOnline) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.borderLight,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'SHOP',
+                                style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      _FarmerNameDisplay(userId: data['userId'], customerName: data['customerName']),
+                      if (ts != null)
+                        Text(
+                          DateFormat('MMM d, h:mm a').format(ts),
+                          style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary),
+                        ),
+                    ],
+                  ),
+                  _StatusChip(status: status),
+                ],
               ),
-          ],
-        ),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(color: _statusMeta(status).color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-          child: Text(LocalizationService.tr(_statusMeta(status).chipTextKey), style: TextStyle(color: _statusMeta(status).color, fontSize: 11, fontWeight: FontWeight.bold)),
+              const Divider(height: 24, thickness: 0.8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '₹${total.toStringAsFixed(2)}',
+                        style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primary),
+                      ),
+                      Text(
+                        payment.toUpperCase(),
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                  if (payment == 'credit' && expiry != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.error.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            LocalizationService.isTamil ? 'காலாவதி' : 'Expires',
+                            style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.error),
+                          ),
+                          Text(
+                            '${expiry.day}/${expiry.month}/${expiry.year}',
+                            style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.error),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+              // Removed mark as ready from outside as requested
+            ],
+          ),
         ),
       ),
     );
@@ -294,10 +361,10 @@ class _OwnerOrdersScreenState extends State<OwnerOrdersScreen> with SingleTicker
 
   Widget _buildSearchBar() {
     return Container(
-      height: 44,
+      height: 48,
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.surfaceTonal,
+        borderRadius: BorderRadius.circular(16),
       ),
       child: TextField(
         controller: _searchController,
@@ -308,11 +375,11 @@ class _OwnerOrdersScreenState extends State<OwnerOrdersScreen> with SingleTicker
         },
         decoration: InputDecoration(
           hintText: LocalizationService.tr('owner_orders_search_hint'),
-          hintStyle: GoogleFonts.notoSansTamil(fontSize: 13, color: Colors.grey),
-          prefixIcon: const Icon(Icons.search, size: 20, color: Colors.grey),
+          hintStyle: GoogleFonts.inter(fontSize: 14, color: AppColors.textSecondary),
+          prefixIcon: const Icon(Icons.search_rounded, size: 22, color: AppColors.textSecondary),
           suffixIcon: _searchQuery.isNotEmpty 
             ? IconButton(
-                icon: const Icon(Icons.clear, size: 18), 
+                icon: const Icon(Icons.clear_rounded, size: 20), 
                 onPressed: () {
                   _searchController.clear();
                   setState(() => _searchQuery = '');
@@ -320,8 +387,29 @@ class _OwnerOrdersScreenState extends State<OwnerOrdersScreen> with SingleTicker
               ) 
             : null,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
         ),
+      ),
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  final String status;
+  const _StatusChip({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final meta = _statusMeta(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: meta.color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        LocalizationService.tr(meta.chipTextKey),
+        style: GoogleFonts.inter(color: meta.color, fontSize: 12, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -492,19 +580,22 @@ class _OrderActionButton extends StatelessWidget {
        return const SizedBox.shrink();
     }
 
-    return TextButton.icon(
+    return ElevatedButton.icon(
       onPressed: () async {
         await _updateOrderStatus(context, orderId, nextStatus!);
       },
-      style: TextButton.styleFrom(
-         foregroundColor: buttonColor,
-         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)
+      style: ElevatedButton.styleFrom(
+         backgroundColor: buttonColor,
+         foregroundColor: Colors.white,
+         padding: const EdgeInsets.symmetric(vertical: 12),
+         elevation: 0,
+         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
-      icon: Icon(icon, size: 18),
+      icon: Icon(icon, size: 20),
       label: Text(
         LocalizationService.tr(labelKey),
-        style: GoogleFonts.notoSansTamil(
-          fontSize: 13,
+        style: GoogleFonts.inter(
+          fontSize: 14,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -585,3 +676,49 @@ Future<void> _updateOrderStatus(BuildContext context, String orderId, String new
   }
 }
 
+class _FarmerNameDisplay extends StatelessWidget {
+  final String? userId;
+  final String? customerName;
+
+  const _FarmerNameDisplay({this.userId, this.customerName});
+
+  @override
+  Widget build(BuildContext context) {
+    if (customerName != null && customerName!.isNotEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 2),
+        child: Text(
+          customerName!,
+          style: GoogleFonts.notoSansTamil(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      );
+    }
+
+    if (userId == null) return const SizedBox.shrink();
+
+    return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data?.data() == null) return const SizedBox.shrink();
+        final name = snapshot.data!.data()!['name'] as String?;
+        if (name == null || name.isEmpty) return const SizedBox.shrink();
+        
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 2),
+          child: Text(
+            name,
+            style: GoogleFonts.notoSansTamil(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}

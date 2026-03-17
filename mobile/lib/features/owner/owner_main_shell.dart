@@ -9,7 +9,6 @@ import 'orders/owner_orders_screen.dart';
 import 'stock/owner_stock_screen.dart';
 import 'farmers/owner_farmers_screen.dart';
 import 'feedback/owner_feedback_list_screen.dart';
-import '../../core/services/debug_notification_service.dart';
 import 'package:provider/provider.dart';
 import '../auth/providers/auth_provider.dart' as app_auth;
 
@@ -55,62 +54,42 @@ class _OwnerMainShellState extends State<OwnerMainShell> {
     }
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: _pages[_currentIndex],
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: NavigationBar(
-          selectedIndex: _currentIndex,
-          onDestinationSelected: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          backgroundColor: Colors.white,
-          indicatorColor: AppColors.primary.withOpacity(0.15),
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(Icons.dashboard_outlined),
-              selectedIcon: const Icon(Icons.dashboard, color: AppColors.primary),
-              label: LocalizationService.tr('owner_nav_dashboard'),
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.receipt_long_outlined),
-              selectedIcon: const Icon(Icons.receipt_long, color: AppColors.primary),
-              label: LocalizationService.tr('owner_nav_orders'),
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.inventory_2_outlined),
-              selectedIcon: const Icon(Icons.inventory_2, color: AppColors.primary),
-              label: LocalizationService.tr('owner_nav_stock'),
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.groups_outlined),
-              selectedIcon: const Icon(Icons.groups, color: AppColors.primary),
-              label: LocalizationService.tr('owner_nav_farmers'),
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.rate_review_outlined),
-              selectedIcon: const Icon(Icons.rate_review, color: AppColors.primary),
-              label: LocalizationService.isTamil ? 'கருத்துக்கள்' : 'Feedbacks',
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        mini: true,
-        backgroundColor: Colors.red.withOpacity(0.1),
-        elevation: 0,
-        onPressed: () => DebugNotificationService.sendTestNotification(),
-        child: const Icon(Icons.bug_report, color: Colors.red),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) => setState(() => _currentIndex = index),
+        backgroundColor: AppColors.surface,
+        elevation: 10,
+        indicatorColor: AppColors.primaryContainer,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        destinations: [
+          NavigationDestination(
+            icon: const Icon(Icons.dashboard_outlined),
+            selectedIcon: const Icon(Icons.dashboard_rounded, color: AppColors.primary),
+            label: LocalizationService.tr('owner_nav_dashboard'),
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.receipt_long_outlined),
+            selectedIcon: const Icon(Icons.receipt_long_rounded, color: AppColors.primary),
+            label: LocalizationService.tr('owner_nav_orders'),
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.inventory_2_outlined),
+            selectedIcon: const Icon(Icons.inventory_2_rounded, color: AppColors.primary),
+            label: LocalizationService.tr('owner_nav_stock'),
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.groups_outlined),
+            selectedIcon: const Icon(Icons.groups_rounded, color: AppColors.primary),
+            label: LocalizationService.tr('owner_nav_farmers'),
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.rate_review_outlined),
+            selectedIcon: const Icon(Icons.rate_review_rounded, color: AppColors.primary),
+            label: LocalizationService.isTamil ? 'கருத்துக்கள்' : 'Feedbacks',
+          ),
+        ],
       ),
     );
   }

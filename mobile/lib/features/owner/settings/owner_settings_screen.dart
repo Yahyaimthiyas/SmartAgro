@@ -351,6 +351,26 @@ class _OwnerSettingsScreenState extends State<OwnerSettingsScreen> {
             iconColor: Colors.red,
             onTap: _logout,
           ),
+          const SizedBox(height: 48),
+          Center(
+            child: Column(
+              children: [
+                Text(
+                  'SmartAgro',
+                  style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Colors.grey.shade400),
+                ),
+                Text(
+                  'Version 1.0.0',
+                  style: GoogleFonts.inter(
+                      fontSize: 12, color: Colors.grey.shade400),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
         ],
       ),
     );

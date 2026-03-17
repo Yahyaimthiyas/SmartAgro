@@ -1,33 +1,47 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Brand Colors - "Premium Emerald & Harvest Gold"
-  static const Color primaryDark = Color(0xFF00251A);
-  static const Color primary = Color(0xFF004D40); // Deep Emerald
-  static const Color primaryLight = Color(0xFF26A69A);
-  static const Color accent = Color(0xFFFFC107); // Harvest Gold for highlights
-  
-  // Neutral Palette
-  static const Color background = Color(0xFFFBFDFA); // Natural Off-White
-  static const Color surface = Colors.white;
-  static const Color cardBg = Color(0xFFFFFFFF);
-  
+  // Brand Colors (Google Palette)
+  static const Color primary = Color(0xFF1A73E8);        // Google Blue
+  static const Color primaryContainer = Color(0xFFD2E3FC); // Light Blue Surface
+  static const Color secondary = Color(0xFF34A853);      // Google Green
+  static const Color secondaryContainer = Color(0xFFE6F4EA); // Light Green Surface
+  static const Color accent = Color(0xFFFBBC05);         // Google Yellow
+  static const Color error = Color(0xFFEA4335);           // Google Red (Warning)
+  static const Color googleRed = Color(0xFFEA4335);       
+  static const Color googleBlue = Color(0xFF1A73E8);
+  static const Color googleGreen = Color(0xFF34A853);
+  static const Color googleYellow = Color(0xFFFBBC05);
+
+  // Backgrounds & Surfaces
+  static const Color background = Color(0xFFF8F9FA);     // Minimalist Light Gray
+  static const Color surface = Colors.white;             // Card/List Backgrounds
+  static const Color surfaceVariant = Color(0xFFEEEEEE); // Alternative Surfaces
+  static const Color surfaceTonal = Color(0xFFF1F3F4);   // Google Tonal Surface
+
   // Text Colors
-  static const Color textPrimary = Color(0xFF1A1C1E); // Deep Slate
-  static const Color textSecondary = Color(0xFF42474E); // Muted Slate
-  static const Color textPlaceholder = Color(0xFF72777A);
-  
-  // Specific UI Meanings
-  static const Color healthy = Color(0xFF2E7D32); // Success/Growth
-  static const Color warning = Color(0xFFF57C00); // Low Stock/Caution
-  static const Color danger = Color(0xFFD32F2F);  // Out of Stock/Critical
-  static const Color medical = Color(0xFF0288D1); // Dosage/Advice
+  static const Color textPrimary = Color(0xFF202124);   // Standard Black Text
+  static const Color textSecondary = Color(0xFF5F6368); // Secondary Dark Gray
+  static const Color textTertiary = Color(0xFF70757A);  // Faint Text
+  static const Color textPlaceholder = Color(0xFF9AA0A6); // Input Placeholder
 
-  // Glassmorphism overlays
-  static Color glassWhite = Colors.white.withOpacity(0.7);
-  static Color glassBlack = Colors.black.withOpacity(0.1);
+  // Border & Dividers
+  static const Color border = Color(0xFFDADCE0);         // Subtle Component Borders
+  static const Color borderLight = Color(0xFFE8EAED);    // Lightest Dividers
 
-  // Borders
-  static const Color border = Color(0xFFC4C7C5);
-  static Color borderLight = const Color(0xFFE1E3E1);
+  // Semantic States
+  static const Color success = Color(0xFF34A853);
+  static const Color warning = Color(0xFFFBBC05);
+  static const Color info = Color(0xFF1A73E8);
+
+  // Box Shadows
+  static List<BoxShadow> premiumShadow = [
+    BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+  ];
+
+  // Aliases for compatibility
+  static const Color primaryDark = Color(0xFF174EA6);
+  static const Color primaryLight = Color(0xFFD2E3FC);
+  static const Color danger = error;
+  static const Color cardBg = surface;
 }

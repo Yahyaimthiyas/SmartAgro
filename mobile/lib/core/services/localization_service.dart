@@ -50,4 +50,9 @@ class LocalizationService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_langKey, languageCode);
   }
+
+  static Future<void> toggleLanguage() async {
+    final next = isTamil ? 'en' : 'ta';
+    await changeLocale(next);
+  }
 }

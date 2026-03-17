@@ -46,22 +46,36 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
   final _expiryDateController = TextEditingController(); 
   DateTime? _selectedExpiryDate;
 
-  final _brandController = TextEditingController();
+  final _brandEnController = TextEditingController();
+  final _brandTaController = TextEditingController(); // [NEW]
   final _subCategoryController = TextEditingController();
-  final _cropUsedForController = TextEditingController();
-  final _targetPestController = TextEditingController();
-  final _applicationMethodController = TextEditingController();
-  final _varietyNameController = TextEditingController();
-  final _growingConditionsController = TextEditingController();
-  final _benefitsController = TextEditingController();
-  final _technicalNameController = TextEditingController();
-  final _compositionController = TextEditingController();
-  final _classificationController = TextEditingController();
-  final _toxicityController = TextEditingController();
-  final _modeOfEntryController = TextEditingController();
-  final _modeOfActionController = TextEditingController();
-  final _expertAdviceController = TextEditingController();
-  final _batchNumberController = TextEditingController(); // [NEW]
+  final _cropUsedForTaController = TextEditingController(); // [NEW]
+  final _cropUsedForEnController = TextEditingController(); // [NEW]
+  final _targetPestTaController = TextEditingController(); // [NEW]
+  final _targetPestEnController = TextEditingController(); // [NEW]
+  final _applicationMethodTaController = TextEditingController(); // [NEW]
+  final _applicationMethodEnController = TextEditingController(); // [NEW]
+  final _varietyNameTaController = TextEditingController(); // [NEW]
+  final _varietyNameEnController = TextEditingController(); // [NEW]
+  final _growingConditionsTaController = TextEditingController(); // [NEW]
+  final _growingConditionsEnController = TextEditingController(); // [NEW]
+  final _benefitsTaController = TextEditingController(); // [NEW]
+  final _benefitsEnController = TextEditingController(); // [NEW]
+  final _technicalNameEnController = TextEditingController();
+  final _technicalNameTaController = TextEditingController(); // [NEW]
+  final _compositionTaController = TextEditingController(); // [NEW]
+  final _compositionEnController = TextEditingController(); // [NEW]
+  final _classificationTaController = TextEditingController(); // [NEW]
+  final _classificationEnController = TextEditingController(); // [NEW]
+  final _toxicityTaController = TextEditingController(); // [NEW]
+  final _toxicityEnController = TextEditingController(); // [NEW]
+  final _modeOfEntryTaController = TextEditingController(); // [NEW]
+  final _modeOfEntryEnController = TextEditingController(); // [NEW]
+  final _modeOfActionTaController = TextEditingController(); // [NEW]
+  final _modeOfActionEnController = TextEditingController(); // [NEW]
+  final _expertAdviceTaController = TextEditingController(); // [NEW]
+  final _expertAdviceEnController = TextEditingController(); // [NEW]
+  final _batchNumberController = TextEditingController();
   final _purchasePriceController = TextEditingController(); // [NEW]
 
   final List<TextEditingController> _featureControllers = [];
@@ -147,21 +161,35 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
     _safetyEnController.dispose();
     _qrIdController.dispose();
     _dosagePerCentEnController.dispose();
-    _brandController.dispose();
+    _brandEnController.dispose();
+    _brandTaController.dispose();
     _subCategoryController.dispose();
-    _cropUsedForController.dispose();
-    _targetPestController.dispose();
-    _applicationMethodController.dispose();
-    _varietyNameController.dispose();
-    _growingConditionsController.dispose();
-    _benefitsController.dispose();
-    _technicalNameController.dispose();
-    _compositionController.dispose();
-    _classificationController.dispose();
-    _toxicityController.dispose();
-    _modeOfEntryController.dispose();
-    _modeOfActionController.dispose();
-    _expertAdviceController.dispose();
+    _cropUsedForTaController.dispose();
+    _cropUsedForEnController.dispose();
+    _targetPestTaController.dispose();
+    _targetPestEnController.dispose();
+    _applicationMethodTaController.dispose();
+    _applicationMethodEnController.dispose();
+    _varietyNameTaController.dispose();
+    _varietyNameEnController.dispose();
+    _growingConditionsTaController.dispose();
+    _growingConditionsEnController.dispose();
+    _benefitsTaController.dispose();
+    _benefitsEnController.dispose();
+    _technicalNameEnController.dispose();
+    _technicalNameTaController.dispose();
+    _compositionTaController.dispose();
+    _compositionEnController.dispose();
+    _classificationTaController.dispose();
+    _classificationEnController.dispose();
+    _toxicityTaController.dispose();
+    _toxicityEnController.dispose();
+    _modeOfEntryTaController.dispose();
+    _modeOfEntryEnController.dispose();
+    _modeOfActionTaController.dispose();
+    _modeOfActionEnController.dispose();
+    _expertAdviceTaController.dispose();
+    _expertAdviceEnController.dispose();
     for (var c in _featureControllers) {
       c.dispose();
     }
@@ -225,20 +253,34 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
       _dosagePerCentEnController.text = data['dosage_per_cent_en'] as String? ?? '';
       _selectedCategoryId = data['categoryId'] as String?;
       _selectedSubCategory = data['subCategory'] as String?;
-      _brandController.text = data['brand'] as String? ?? '';
-      _cropUsedForController.text = data['cropUsedFor'] as String? ?? '';
-      _targetPestController.text = data['pestControlled'] as String? ?? '';
-      _applicationMethodController.text = data['applicationMethod'] as String? ?? '';
-      _varietyNameController.text = data['varietyName'] as String? ?? '';
-      _growingConditionsController.text = data['growingConditions'] as String? ?? '';
-      _benefitsController.text = data['benefits'] as String? ?? '';
-      _technicalNameController.text = data['technicalName'] as String? ?? '';
-      _compositionController.text = data['composition'] as String? ?? '';
-      _classificationController.text = data['classification'] as String? ?? '';
-      _toxicityController.text = data['toxicity'] as String? ?? '';
-      _modeOfEntryController.text = data['modeOfEntry'] as String? ?? '';
-      _modeOfActionController.text = data['modeOfAction'] as String? ?? '';
-      _expertAdviceController.text = data['expertAdvice'] as String? ?? '';
+      _brandTaController.text = data['brand_ta'] as String? ?? '';
+      _brandEnController.text = data['brand_en'] as String? ?? '';
+      _cropUsedForTaController.text = data['cropUsedFor_ta'] as String? ?? '';
+      _cropUsedForEnController.text = data['cropUsedFor_en'] as String? ?? '';
+      _targetPestTaController.text = data['targetPest_ta'] as String? ?? '';
+      _targetPestEnController.text = data['targetPest_en'] as String? ?? '';
+      _applicationMethodTaController.text = data['applicationMethod_ta'] as String? ?? '';
+      _applicationMethodEnController.text = data['applicationMethod_en'] as String? ?? '';
+      _varietyNameTaController.text = data['varietyName_ta'] as String? ?? '';
+      _varietyNameEnController.text = data['varietyName_en'] as String? ?? '';
+      _growingConditionsTaController.text = data['growingConditions_ta'] as String? ?? '';
+      _growingConditionsEnController.text = data['growingConditions_en'] as String? ?? '';
+      _benefitsTaController.text = data['benefits_ta'] as String? ?? '';
+      _benefitsEnController.text = data['benefits_en'] as String? ?? '';
+      _technicalNameTaController.text = data['technicalName_ta'] as String? ?? '';
+      _technicalNameEnController.text = data['technicalName_en'] as String? ?? '';
+      _compositionTaController.text = data['composition_ta'] as String? ?? '';
+      _compositionEnController.text = data['composition_en'] as String? ?? '';
+      _classificationTaController.text = data['classification_ta'] as String? ?? '';
+      _classificationEnController.text = data['classification_en'] as String? ?? '';
+      _toxicityTaController.text = data['toxicity_ta'] as String? ?? '';
+      _toxicityEnController.text = data['toxicity_en'] as String? ?? '';
+      _modeOfEntryTaController.text = data['modeOfEntry_ta'] as String? ?? '';
+      _modeOfEntryEnController.text = data['modeOfEntry_en'] as String? ?? '';
+      _modeOfActionTaController.text = data['modeOfAction_ta'] as String? ?? '';
+      _modeOfActionEnController.text = data['modeOfAction_en'] as String? ?? '';
+      _expertAdviceTaController.text = data['expertAdvice_ta'] as String? ?? '';
+      _expertAdviceEnController.text = data['expertAdvice_en'] as String? ?? '';
 
       final features = data['keyFeatures'] as List<dynamic>? ?? [];
       _featureControllers.clear();
@@ -297,107 +339,291 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA), // Lighter background
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          LocalizationService.tr(isEdit ? 'owner_stock_edit_product_title' : 'owner_stock_add_product_title'),
-          style: GoogleFonts.notoSansTamil(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF1E293B),
-          ),
-        ),
-      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : SafeArea(
-              child: Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 100), // Extra bottom padding for floating bar
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // entry Method Options
-                      if (widget.productId == null)
-                      _buildEntryMethodOptions(),
+          : CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                // 1. Premium Sliver AppBar
+                SliverAppBar(
+                  expandedHeight: 120,
+                  pinned: true,
+                  stretch: true,
+                  backgroundColor: AppColors.primary,
+                  elevation: 0,
+                  leading: IconButton(
+                    icon: const CircleAvatar(
+                      backgroundColor: Colors.white24,
+                      child: Icon(Icons.arrow_back_ios_new, size: 16, color: Colors.white),
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  flexibleSpace: FlexibleSpaceBar(
+                    centerTitle: true,
+                    title: Text(
+                      LocalizationService.tr(isEdit ? 'owner_stock_edit_product_title' : 'owner_stock_add_product_title'),
+                      style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: Colors.white,
+                      ),
+                    ),
+                    background: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [AppColors.primary, Color(0xFF00332B)],
+                        ),
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            right: -20,
+                            top: -20,
+                            child: Icon(Icons.inventory_2_outlined, size: 150, color: Colors.white.withOpacity(0.05)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  actions: [
+                    if (isEdit)
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.white),
+                        onPressed: () => _showDeleteConfirmation(context),
+                      ),
+                  ],
+                ),
+
+                // 2. Form Content
+                SliverToBoxAdapter(
+                  child: Form(
+                    key: _formKey,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // entry Method Options
+                          if (widget.productId == null) _buildEntryMethodOptions(),
 
                       const SizedBox(height: 12),
 
-                      // Section 1: Basic Info
-                      _buildSectionTitle(LocalizationService.tr('header_basic_info')),
+                          _buildSectionTitle(LocalizationService.tr('header_basic_info'), Icons.info_outline_rounded),
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: _sectionDecoration(),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildImagePicker(),
+                                const SizedBox(height: 24),
+                                _buildTextField(
+                                  controller: _nameTaController,
+                                  labelKey: 'owner_stock_field_name_ta',
+                                  keyboardType: TextInputType.text,
+                                  icon: Icons.translate,
+                                ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: _nameEnController,
+                                  labelKey: 'owner_stock_field_name_en',
+                                  keyboardType: TextInputType.text,
+                                  icon: Icons.abc_rounded,
+                                ),
+                                const SizedBox(height: 16),
+                                _buildCategoryDropdown(),
+                                const SizedBox(height: 16),
+                                _buildSubCategoryDropdown(),
+                                const SizedBox(height: 16),
+                                _buildBrandField(),
+                              ],
+                            ),
+                          ),
+                      // Section 2: Crop & Variety Details
+                      _buildSectionTitle(LocalizationService.isTamil ? 'பயிர் மற்றும் வகை விவரங்கள்' : 'Crop & Variety Details', Icons.grass_outlined),
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: _sectionDecoration(),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildImagePicker(),
-                            const SizedBox(height: 24),
                             _buildTextField(
-                              controller: _nameTaController,
-                              labelKey: 'owner_stock_field_name_ta',
-                              keyboardType: TextInputType.text,
+                              controller: _cropUsedForTaController,
+                              labelKey: LocalizationService.isTamil ? 'பயன்படுத்தப்படும் பயிர்கள் (தமிழ்)' : 'Target Crops (Tamil)',
+                              icon: Icons.eco_outlined,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildTextField(
+                              controller: _cropUsedForEnController,
+                              labelKey: LocalizationService.isTamil ? 'பயன்படுத்தப்படும் பயிர்கள் (ஆங்கிலம்)' : 'Target Crops (English)',
+                              icon: Icons.eco_outlined,
                             ),
                             const SizedBox(height: 16),
                             _buildTextField(
-                              controller: _nameEnController,
-                              labelKey: 'owner_stock_field_name_en',
-                              keyboardType: TextInputType.text,
+                              controller: _targetPestTaController,
+                              labelKey: LocalizationService.isTamil ? 'கட்டுப்படுத்தும் பூச்சிகள் (தமிழ்)' : 'Target Pests (Tamil)',
+                              icon: Icons.bug_report_outlined,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildTextField(
+                              controller: _targetPestEnController,
+                              labelKey: LocalizationService.isTamil ? 'கட்டுப்படுத்தும் பூச்சிகள் (ஆங்கிலம்)' : 'Target Pests (English)',
+                              icon: Icons.bug_report_outlined,
                             ),
                             const SizedBox(height: 16),
-                            _buildCategoryDropdown(),
+                            _buildMultilineField(
+                              controller: _applicationMethodTaController,
+                              labelKey: LocalizationService.isTamil ? 'பயன்படுத்தும் முறை (தமிழ்)' : 'Application Method (Tamil)',
+                              icon: Icons.shutter_speed_outlined,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildMultilineField(
+                              controller: _applicationMethodEnController,
+                              labelKey: LocalizationService.isTamil ? 'பயன்படுத்தும் முறை (ஆங்கிலம்)' : 'Application Method (English)',
+                              icon: Icons.shutter_speed_outlined,
+                            ),
                             const SizedBox(height: 16),
-                            _buildSubCategoryDropdown(),
-                            const SizedBox(height: 16),
-                            _buildBrandField(),
+                            _buildTextField(
+                              controller: _varietyNameTaController,
+                              labelKey: LocalizationService.isTamil ? 'ரகம் / இனத்தின் பெயர் (தமிழ்)' : 'Variety Name (Tamil)',
+                            ),
+                            const SizedBox(height: 12),
+                             _buildTextField(
+                              controller: _varietyNameEnController,
+                              labelKey: LocalizationService.isTamil ? 'ரகம் / இனத்தின் பெயர் (ஆங்கிலம்)' : 'Variety Name (English)',
+                            ),
+                             const SizedBox(height: 16),
+                             _buildMultilineField(
+                              controller: _growingConditionsTaController,
+                              labelKey: LocalizationService.isTamil ? 'வளரும் சூழல் / நிபந்தனைகள் (தமிழ்)' : 'Growing Conditions (Tamil)',
+                            ),
+                             const SizedBox(height: 12),
+                             _buildMultilineField(
+                              controller: _growingConditionsEnController,
+                              labelKey: LocalizationService.isTamil ? 'வளரும் சூழல் / நிபந்தனைகள் (ஆங்கிலம்)' : 'Growing Conditions (English)',
+                            ),
+                             const SizedBox(height: 16),
+                             _buildMultilineField(
+                              controller: _benefitsTaController,
+                              labelKey: LocalizationService.isTamil ? 'நன்மைகள் (தமிழ்)' : 'Benefits (Tamil)',
+                              icon: Icons.auto_awesome_outlined,
+                            ),
+                             const SizedBox(height: 12),
+                             _buildMultilineField(
+                              controller: _benefitsEnController,
+                              labelKey: LocalizationService.isTamil ? 'நன்மைகள் (ஆங்கிலம்)' : 'Benefits (English)',
+                              icon: Icons.auto_awesome_outlined,
+                            ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 32),
-
-                      const SizedBox(height: 32),
                       
                       // Section 2: Technical Info
-                      _buildSectionTitle('Technical Specifications'),
+                      _buildSectionTitle(LocalizationService.isTamil ? 'தொழில்நுட்ப விவரங்கள்' : 'Technical Specifications', Icons.science_outlined),
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: _sectionDecoration(),
                         child: Column(
                           children: [
-                            _buildTextField(controller: _technicalNameController, labelKey: 'Technical Name (e.g. Chlorantraniliprole)', keyboardType: TextInputType.text),
+                            _buildTextField(
+                              controller: _technicalNameTaController, 
+                              labelKey: LocalizationService.isTamil ? 'தொழில்நுட்ப பெயர் (தமிழ்)' : 'Technical Name (Tamil)', 
+                              keyboardType: TextInputType.text,
+                              icon: Icons.translate,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildTextField(
+                              controller: _technicalNameEnController, 
+                              labelKey: LocalizationService.isTamil ? 'தொழில்நுட்ப பெயர் (ஆங்கிலம்)' : 'Technical Name (English)', 
+                              keyboardType: TextInputType.text,
+                              icon: Icons.abc_rounded,
+                            ),
                             const SizedBox(height: 16),
-                            _buildTextField(controller: _compositionController, labelKey: 'Composition (e.g. 18.5% SC)', keyboardType: TextInputType.text),
+                            _buildTextField(
+                              controller: _compositionTaController, 
+                              labelKey: LocalizationService.isTamil ? 'கலவை (தமிழ்)' : 'Composition (Tamil)', 
+                              keyboardType: TextInputType.text,
+                              icon: Icons.biotech_outlined,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildTextField(
+                              controller: _compositionEnController, 
+                              labelKey: LocalizationService.isTamil ? 'கலவை (ஆங்கிலம்)' : 'Composition (English)', 
+                              keyboardType: TextInputType.text,
+                              icon: Icons.biotech_outlined,
+                            ),
                             const SizedBox(height: 16),
                             Row(
                               children: [
-                                Expanded(child: _buildTextField(controller: _classificationController, labelKey: 'Classification', keyboardType: TextInputType.text)),
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: _classificationTaController, 
+                                    labelKey: LocalizationService.isTamil ? 'வகைப்பாடு (தமிழ்)' : 'Classification (Tamil)', 
+                                    keyboardType: TextInputType.text,
+                                  ),
+                                ),
                                 const SizedBox(width: 12),
-                                Expanded(child: _buildTextField(controller: _toxicityController, labelKey: 'Toxicity (Color)', keyboardType: TextInputType.text)),
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: _classificationEnController, 
+                                    labelKey: LocalizationService.isTamil ? 'வகைப்பாடு (ஆங்கிலம்)' : 'Classification (English)', 
+                                    keyboardType: TextInputType.text,
+                                  ),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 16),
-                            _buildTextField(controller: _modeOfEntryController, labelKey: 'Mode of Entry', keyboardType: TextInputType.text),
+                            _buildTextField(
+                              controller: _toxicityTaController, 
+                              labelKey: LocalizationService.isTamil ? 'நச்சுத்தன்மை (நிறம்) - தமிழ்' : 'Toxicity (Color) - Tamil', 
+                              keyboardType: TextInputType.text,
+                              icon: Icons.warning_amber_rounded,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildTextField(
+                              controller: _toxicityEnController, 
+                              labelKey: LocalizationService.isTamil ? 'நச்சுத்தன்மை (நிறம்) - ஆங்கிலம்' : 'Toxicity (Color) - English', 
+                              keyboardType: TextInputType.text,
+                              icon: Icons.warning_amber_rounded,
+                            ),
                             const SizedBox(height: 16),
-                            _buildMultilineField(controller: _modeOfActionController, labelKey: 'Mode of Action'),
+                            _buildMultilineField(
+                              controller: _modeOfEntryTaController, 
+                              labelKey: LocalizationService.isTamil ? 'நுழைவு முறை (தமிழ்)' : 'Mode of Entry (Tamil)',
+                              icon: Icons.input_rounded,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildMultilineField(
+                              controller: _modeOfEntryEnController, 
+                              labelKey: LocalizationService.isTamil ? 'நுழைவு முறை (ஆங்கிலம்)' : 'Mode of Entry (English)',
+                              icon: Icons.input_rounded,
+                            ),
+                            const SizedBox(height: 16),
+                            _buildMultilineField(
+                              controller: _modeOfActionTaController, 
+                              labelKey: LocalizationService.isTamil ? 'செயல்பாடு முறை (தமிழ்)' : 'Mode of Action (Tamil)',
+                              icon: Icons.flash_on_outlined,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildMultilineField(
+                              controller: _modeOfActionEnController, 
+                              labelKey: LocalizationService.isTamil ? 'செயல்பாடு முறை (ஆங்கிலம்)' : 'Mode of Action (English)',
+                              icon: Icons.flash_on_outlined,
+                            ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 32),
 
                       // Section 3: Detailed Usage Table
-                      _buildSectionTitle('Usage Instructions (Crop-wise)'),
+                      _buildSectionTitle(LocalizationService.isTamil ? 'பயன்பாட்டு வழிமுறைகள் (பயிர் வாரியாக)' : 'Usage Instructions (Crop-wise)', Icons.table_chart_outlined),
                       _buildUsageTableEditor(),
                       const SizedBox(height: 32),
 
                       // Section 4: Key Features & Expert Advice
-                      _buildSectionTitle('Product Highlights'),
+                      _buildSectionTitle(LocalizationService.isTamil ? 'சிறப்பம்சங்கள் மற்றும் ஆலோசனை' : 'Product Highlights', Icons.stars_rounded),
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: _sectionDecoration(),
@@ -405,89 +631,105 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
                           children: [
                             _buildKeyFeaturesEditor(),
                             const SizedBox(height: 24),
-                            _buildMultilineField(controller: _expertAdviceController, labelKey: 'Expert Advice / Agronomist Quote'),
+                            _buildMultilineField(
+                              controller: _expertAdviceTaController, 
+                              labelKey: LocalizationService.isTamil ? 'நிபுணர் ஆலோசனை (தமிழ்)' : 'Expert Advice (Tamil)',
+                              icon: Icons.psychology_outlined,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildMultilineField(
+                              controller: _expertAdviceEnController, 
+                              labelKey: LocalizationService.isTamil ? 'நிபுணர் ஆலோசனை (ஆங்கிலம்)' : 'Expert Advice (English)',
+                              icon: Icons.psychology_outlined,
+                            ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 32),
 
                       // Section 5: Variants (Sizes & Multipacks)
-                      _buildSectionTitle('Sizes & Pricing Variants'),
+                      _buildSectionTitle(LocalizationService.isTamil ? 'அளவு மற்றும் விலை மாறுபாடுகள்' : 'Sizes & Pricing Variants', Icons.layers_outlined),
                       _buildVariantsEditor(),
                       const SizedBox(height: 32),
                       const SizedBox(height: 32),
 
-                      // Section 2: Pricing & Stock
-                      _buildSectionTitle(LocalizationService.tr('header_pricing_stock')),
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: _sectionDecoration(),
-                        child: Column(
-                          children: [
-                            Row(
+                          // Section 2: Pricing & Stock
+                          _buildSectionTitle(LocalizationService.tr('header_pricing_stock'), Icons.payments_outlined),
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: _sectionDecoration(),
+                            child: Column(
                               children: [
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: _priceController,
-                                    labelKey: 'owner_stock_field_price',
-                                    keyboardType: TextInputType.number,
-                                    prefixText: '₹ ',
-                                  ),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: _priceController,
+                                        labelKey: 'owner_stock_field_price',
+                                        keyboardType: TextInputType.number,
+                                        prefixText: '₹ ',
+                                        icon: Icons.sell_outlined,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: _purchasePriceController,
+                                        labelKey: LocalizationService.isTamil ? 'வாங்கிய விலை' : 'Purchase Price',
+                                        keyboardType: TextInputType.number,
+                                        prefixText: '₹ ',
+                                        icon: Icons.shopping_bag_outlined,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: _purchasePriceController,
-                                    labelKey: LocalizationService.isTamil ? 'வாங்கிய விலை' : 'Purchase Price',
-                                    keyboardType: TextInputType.number,
-                                    prefixText: '₹ ',
-                                  ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: _stockController,
+                                        labelKey: 'owner_stock_field_stock',
+                                        keyboardType: TextInputType.number,
+                                        icon: Icons.inventory_2_outlined,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: _batchNumberController,
+                                        labelKey: LocalizationService.isTamil ? 'பேட்ச் எண்' : 'Batch Number',
+                                        keyboardType: TextInputType.text,
+                                        icon: Icons.tag,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: _unitTaController,
+                                        labelKey: 'owner_stock_field_unit_ta',
+                                        keyboardType: TextInputType.text,
+                                        icon: Icons.scale_outlined,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: _unitEnController,
+                                        labelKey: 'owner_stock_field_unit_en',
+                                        keyboardType: TextInputType.text,
+                                        icon: Icons.scale_outlined,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: _stockController,
-                                    labelKey: 'owner_stock_field_stock',
-                                    keyboardType: TextInputType.number,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: _batchNumberController,
-                                    labelKey: LocalizationService.isTamil ? 'பேட்ச் எண்' : 'Batch Number',
-                                    keyboardType: TextInputType.text,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: _unitTaController,
-                                    labelKey: 'owner_stock_field_unit_ta',
-                                    keyboardType: TextInputType.text,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: _unitEnController,
-                                    labelKey: 'owner_stock_field_unit_en',
-                                    keyboardType: TextInputType.text,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+                          ),
                       const SizedBox(height: 32),
 
                       // [NEW] Section 2.5: Expiry Info
@@ -660,80 +902,97 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
                       ),
                       const SizedBox(height: 32),
 
-                      // Section 4: Details
-                      _buildSectionTitle(LocalizationService.tr('header_product_details')),
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: _sectionDecoration(),
-                        child: Column(
-                          children: [
-                            _buildMultilineField(
-                              controller: _descriptionTaController,
-                              labelKey: 'owner_stock_field_description_ta',
-                            ),
-                            const SizedBox(height: 16),
-                            _buildMultilineField(
-                              controller: _descriptionEnController,
-                              labelKey: 'owner_stock_field_description_en',
-                            ),
-                            const SizedBox(height: 16),
-                            _buildMultilineField(
-                              controller: _dosageTaController,
-                              labelKey: 'owner_stock_field_dosage_ta',
-                            ),
-                            const SizedBox(height: 16),
-                            _buildMultilineField(
-                              controller: _dosageEnController,
-                              labelKey: 'owner_stock_field_dosage_en',
-                            ),
-                            const SizedBox(height: 16),
-                            _buildMultilineField(
-                              controller: _safetyTaController,
-                              labelKey: 'owner_stock_field_safety_ta',
-                            ),
-                            const SizedBox(height: 16),
-                            _buildMultilineField(
-                              controller: _safetyEnController,
-                              labelKey: 'owner_stock_field_safety_en',
-                            ),
-                            const SizedBox(height: 32),
-                            _buildSectionTitle(LocalizationService.isTamil ? 'QR மற்றும் அளவு விவரங்கள்' : 'QR & Dosage Details'),
-                            Row(
+                          // Section 4: Details
+                          _buildSectionTitle(LocalizationService.tr('header_product_details'), Icons.description_outlined),
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: _sectionDecoration(),
+                            child: Column(
                               children: [
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: _qrIdController,
-                                    labelKey: LocalizationService.isTamil ? 'QR ஐடி' : 'QR ID',
-                                    keyboardType: TextInputType.text,
-                                  ),
+                                _buildMultilineField(
+                                  controller: _descriptionTaController,
+                                  labelKey: 'owner_stock_field_description_ta',
+                                  icon: Icons.translate,
                                 ),
-                                const SizedBox(width: 8),
-                                IconButton(
-                                  onPressed: _scanQRCodeForId,
-                                  icon: const Icon(Icons.qr_code_scanner, color: AppColors.primary),
-                                  tooltip: LocalizationService.isTamil ? 'QR ஸ்கேன் செய்' : 'Scan QR',
-                                )
+                                const SizedBox(height: 16),
+                                _buildMultilineField(
+                                  controller: _descriptionEnController,
+                                  labelKey: 'owner_stock_field_description_en',
+                                  icon: Icons.abc_rounded,
+                                ),
+                                const SizedBox(height: 16),
+                                _buildMultilineField(
+                                  controller: _dosageTaController,
+                                  labelKey: 'owner_stock_field_dosage_ta',
+                                  icon: Icons.science_outlined,
+                                ),
+                                const SizedBox(height: 16),
+                                _buildMultilineField(
+                                  controller: _dosageEnController,
+                                  labelKey: 'owner_stock_field_dosage_en',
+                                  icon: Icons.science_outlined,
+                                ),
+                                const SizedBox(height: 16),
+                                _buildMultilineField(
+                                  controller: _safetyTaController,
+                                  labelKey: 'owner_stock_field_safety_ta',
+                                  icon: Icons.security_rounded,
+                                ),
+                                const SizedBox(height: 16),
+                                _buildMultilineField(
+                                  controller: _safetyEnController,
+                                  labelKey: 'owner_stock_field_safety_en',
+                                  icon: Icons.security_rounded,
+                                ),
+                                const SizedBox(height: 32),
+                                _buildSectionTitle(LocalizationService.isTamil ? 'QR மற்றும் அளவு விவரங்கள்' : 'QR & Dosage Details', Icons.qr_code_2),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: _qrIdController,
+                                        labelKey: LocalizationService.isTamil ? 'QR ஐடி' : 'QR ID',
+                                        keyboardType: TextInputType.text,
+                                        icon: Icons.tag,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: IconButton(
+                                        onPressed: _scanQRCodeForId,
+                                        icon: const Icon(Icons.qr_code_scanner, color: AppColors.primary),
+                                        tooltip: LocalizationService.isTamil ? 'QR ஸ்கேன் செய்' : 'Scan QR',
+                                      ),
+                                    )
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: _dosagePerCentTaController,
+                                  labelKey: LocalizationService.isTamil ? 'அளவு (சென்ட் ஒன்றுக்கு) - தமிழ்' : 'Dosage (per cent) - Tamil',
+                                  keyboardType: TextInputType.text,
+                                  icon: Icons.water_drop_outlined,
+                                ),
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: _dosagePerCentEnController,
+                                  labelKey: LocalizationService.isTamil ? 'அளவு (சென்ட் ஒன்றுக்கு) - ஆங்கிலம்' : 'Dosage (per cent) - English',
+                                  keyboardType: TextInputType.text,
+                                  icon: Icons.water_drop_outlined,
+                                ),
                               ],
                             ),
-                            const SizedBox(height: 16),
-                            _buildTextField(
-                              controller: _dosagePerCentTaController,
-                              labelKey: LocalizationService.isTamil ? 'அளவு (சென்ட் ஒன்றுக்கு) - தமிழ்' : 'Dosage (per cent) - Tamil',
-                              keyboardType: TextInputType.text,
-                            ),
-                            const SizedBox(height: 16),
-                            _buildTextField(
-                              controller: _dosagePerCentEnController,
-                              labelKey: LocalizationService.isTamil ? 'அளவு (சென்ட் ஒன்றுக்கு) - ஆங்கிலம்' : 'Dosage (per cent) - English',
-                              keyboardType: TextInputType.text,
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
       // Sticky Bottom Bar
       bottomNavigationBar: Container(
@@ -779,17 +1038,25 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, [IconData? icon]) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 12),
-      child: Text(
-        title.toUpperCase(),
-        style: GoogleFonts.poppins(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary, // Darker text
-          letterSpacing: 1.0,
-        ),
+      padding: const EdgeInsets.only(left: 4, bottom: 16, top: 12),
+      child: Row(
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 20, color: AppColors.primary),
+            const SizedBox(width: 12),
+          ],
+          Text(
+            title.toUpperCase(),
+            style: GoogleFonts.outfit(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
+              letterSpacing: 1.5,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -798,12 +1065,12 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
     return BoxDecoration(
       color: color ?? Colors.white,
       borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: borderColor ?? Colors.transparent),
+      border: Border.all(color: borderColor ?? AppColors.borderLight.withOpacity(0.5)),
       boxShadow: [
         BoxShadow(
-          color: const Color(0xFF64748B).withOpacity(0.08), // Softer shadow
-          blurRadius: 24,
-          offset: const Offset(0, 8),
+          color: AppColors.primary.withOpacity(0.04),
+          blurRadius: 20,
+          offset: const Offset(0, 10),
         )
       ],
     );
@@ -1014,10 +1281,14 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
       if (data.containsKey('qrId')) _qrIdController.text = data['qrId'].toString();
       if (data.containsKey('categoryId')) _selectedCategoryId = data['categoryId'].toString();
       if (data.containsKey('subCategory')) _selectedSubCategory = data['subCategory'].toString();
-      if (data.containsKey('brand')) _brandController.text = data['brand'].toString();
-      if (data.containsKey('cropUsedFor')) _cropUsedForController.text = data['cropUsedFor'].toString();
-      if (data.containsKey('pestControlled')) _targetPestController.text = data['pestControlled'].toString();
-      if (data.containsKey('applicationMethod')) _applicationMethodController.text = data['applicationMethod'].toString();
+      if (data.containsKey('brand_ta')) _brandTaController.text = data['brand_ta'].toString();
+      if (data.containsKey('brand_en')) _brandEnController.text = data['brand_en'].toString();
+      if (data.containsKey('cropUsedFor_ta')) _cropUsedForTaController.text = data['cropUsedFor_ta'].toString();
+      if (data.containsKey('cropUsedFor_en')) _cropUsedForEnController.text = data['cropUsedFor_en'].toString();
+      if (data.containsKey('targetPest_ta')) _targetPestTaController.text = data['targetPest_ta'].toString();
+      if (data.containsKey('targetPest_en')) _targetPestEnController.text = data['targetPest_en'].toString();
+      if (data.containsKey('applicationMethod_ta')) _applicationMethodTaController.text = data['applicationMethod_ta'].toString();
+      if (data.containsKey('applicationMethod_en')) _applicationMethodEnController.text = data['applicationMethod_en'].toString();
     });
   }
 
@@ -1116,18 +1387,34 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
     String? prefixText,
     String? suffixText,
     String? hint,
+    IconData? icon,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      style: GoogleFonts.inter(fontWeight: FontWeight.w500, color: AppColors.textPrimary),
       decoration: InputDecoration(
         labelText: LocalizationService.tr(labelKey),
+        labelStyle: GoogleFonts.inter(fontSize: 14, color: AppColors.textSecondary),
         hintText: hintKey != null ? LocalizationService.tr(hintKey) : hint,
         prefixText: prefixText,
         suffixText: suffixText,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        prefixIcon: icon != null ? Icon(icon, size: 20, color: AppColors.primary.withOpacity(0.5)) : null,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: AppColors.borderLight),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: AppColors.borderLight),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+        ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.background.withOpacity(0.5),
+        contentPadding: const EdgeInsets.all(16),
       ),
     );
   }
@@ -1135,15 +1422,34 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
   Widget _buildMultilineField({
     required TextEditingController controller,
     required String labelKey,
+    IconData? icon,
   }) {
     return TextFormField(
       controller: controller,
-      maxLines: 3,
+      maxLines: 4,
+      style: GoogleFonts.inter(fontWeight: FontWeight.w500, color: AppColors.textPrimary),
       decoration: InputDecoration(
         labelText: LocalizationService.tr(labelKey),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        labelStyle: GoogleFonts.inter(fontSize: 14, color: AppColors.textSecondary),
+        prefixIcon: icon != null ? Container(
+          padding: const EdgeInsets.only(bottom: 60),
+          child: Icon(icon, size: 20, color: AppColors.primary.withOpacity(0.5)),
+        ) : null,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: AppColors.borderLight),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: AppColors.borderLight),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+        ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.background.withOpacity(0.5),
+        contentPadding: const EdgeInsets.all(16),
       ),
     );
   }
@@ -1251,7 +1557,7 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
     return Column(
       children: [
         DropdownButtonFormField<String>(
-          value: _popularBrands.contains(_brandController.text) ? _brandController.text : null,
+          value: _popularBrands.contains(_brandEnController.text) ? _brandEnController.text : null,
           decoration: InputDecoration(
             labelText: isTa ? 'நிறுவனம் / பிராண்ட்' : 'Company / Brand',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -1259,14 +1565,22 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
             fillColor: Colors.white,
           ),
           items: _popularBrands.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
-          onChanged: (val) => setState(() => _brandController.text = val ?? ''),
+          onChanged: (val) => setState(() => _brandEnController.text = val ?? ''),
           hint: Text(isTa ? 'பிராண்டைத் தேர்ந்தெடுக்கவும்' : 'Select a Brand'),
         ),
         const SizedBox(height: 8),
         _buildTextField(
-          controller: _brandController,
-          labelKey: isTa ? 'அல்லது புதிய பிராண்ட்' : 'Or Type Brand Name',
+          controller: _brandTaController,
+          labelKey: isTa ? 'பிராண்ட் பெயர் (தமிழ்)' : 'Brand Name (Tamil)',
           keyboardType: TextInputType.text,
+          icon: Icons.translate,
+        ),
+        const SizedBox(height: 12),
+        _buildTextField(
+          controller: _brandEnController,
+          labelKey: isTa ? 'பிராண்ட் பெயர் (ஆங்கிலம்)' : 'Brand Name (English)',
+          keyboardType: TextInputType.text,
+          icon: Icons.abc_rounded,
         ),
       ],
     );
@@ -1397,20 +1711,34 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
         'dosage_per_cent_ta': _dosagePerCentTaController.text.trim(),
         'dosage_per_cent_en': _dosagePerCentEnController.text.trim(),
         'subCategory': _selectedSubCategory,
-        'brand': _brandController.text.trim(),
-        'cropUsedFor': _cropUsedForController.text.trim(),
-        'pestControlled': _targetPestController.text.trim(),
-        'applicationMethod': _applicationMethodController.text.trim(),
-        'varietyName': _varietyNameController.text.trim(),
-        'growingConditions': _growingConditionsController.text.trim(),
-        'benefits': _benefitsController.text.trim(),
-        'technicalName': _technicalNameController.text.trim(),
-        'composition': _compositionController.text.trim(),
-        'classification': _classificationController.text.trim(),
-        'toxicity': _toxicityController.text.trim(),
-        'modeOfEntry': _modeOfEntryController.text.trim(),
-        'modeOfAction': _modeOfActionController.text.trim(),
-        'expertAdvice': _expertAdviceController.text.trim(),
+        'brand_ta': _brandTaController.text.trim(),
+        'brand_en': _brandEnController.text.trim(),
+        'cropUsedFor_ta': _cropUsedForTaController.text.trim(),
+        'cropUsedFor_en': _cropUsedForEnController.text.trim(),
+        'targetPest_ta': _targetPestTaController.text.trim(),
+        'targetPest_en': _targetPestEnController.text.trim(),
+        'applicationMethod_ta': _applicationMethodTaController.text.trim(),
+        'applicationMethod_en': _applicationMethodEnController.text.trim(),
+        'varietyName_ta': _varietyNameTaController.text.trim(),
+        'varietyName_en': _varietyNameEnController.text.trim(),
+        'growingConditions_ta': _growingConditionsTaController.text.trim(),
+        'growingConditions_en': _growingConditionsEnController.text.trim(),
+        'benefits_ta': _benefitsTaController.text.trim(),
+        'benefits_en': _benefitsEnController.text.trim(),
+        'technicalName_ta': _technicalNameTaController.text.trim(),
+        'technicalName_en': _technicalNameEnController.text.trim(),
+        'composition_ta': _compositionTaController.text.trim(),
+        'composition_en': _compositionEnController.text.trim(),
+        'classification_ta': _classificationTaController.text.trim(),
+        'classification_en': _classificationEnController.text.trim(),
+        'toxicity_ta': _toxicityTaController.text.trim(),
+        'toxicity_en': _toxicityEnController.text.trim(),
+        'modeOfEntry_ta': _modeOfEntryTaController.text.trim(),
+        'modeOfEntry_en': _modeOfEntryEnController.text.trim(),
+        'modeOfAction_ta': _modeOfActionTaController.text.trim(),
+        'modeOfAction_en': _modeOfActionEnController.text.trim(),
+        'expertAdvice_ta': _expertAdviceTaController.text.trim(),
+        'expertAdvice_en': _expertAdviceEnController.text.trim(),
         'keyFeatures': _featureControllers.map((c) => c.text.trim()).where((t) => t.isNotEmpty).toList(),
         'usageTable': _usageTableRows.map((row) => {
           'crop': row['crop']!.text.trim(),
@@ -1477,6 +1805,42 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
       }
     }
   }
+  Future<void> _showDeleteConfirmation(BuildContext context) async {
+    final isTa = LocalizationService.isTamil;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isTa ? 'தயாரிப்பை நீக்கவா?' : 'Delete Product?'),
+        content: Text(isTa ? 'நிச்சயமாக இந்த தயாரிப்பை நீக்க விரும்புகிறீர்களா? இதை மீட்டெடுக்க முடியாது.' : 'Are you sure you want to delete this product? This action cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(isTa ? 'ரத்து' : 'Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true), 
+            child: Text(isTa ? 'நீக்கு' : 'Delete', style: const TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && widget.productId != null) {
+      setState(() => _saving = true);
+      try {
+        await FirebaseFirestore.instance.collection('products').doc(widget.productId).delete();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(isTa ? 'தயாரிப்பு நீக்கப்பட்டது' : 'Product deleted successfully')),
+        );
+        Navigator.pop(context);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(isTa ? 'நீக்குவதில் தோல்வி' : 'Delete failed: $e')),
+        );
+      } finally {
+        if (mounted) setState(() => _saving = false);
+      }
+    }
+  }
+
   Widget _buildKeyFeaturesEditor() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1547,13 +1911,13 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
             scrollDirection: Axis.horizontal,
             child: DataTable(
               columnSpacing: 20,
-              columns: const [
-                DataColumn(label: Text('Crop')),
-                DataColumn(label: Text('Pest')),
-                DataColumn(label: Text('Dosage/Acre')),
-                DataColumn(label: Text('Dilution')),
-                DataColumn(label: Text('Waiting')),
-                DataColumn(label: Text('')),
+              columns: [
+                DataColumn(label: Text(LocalizationService.isTamil ? 'பயிர்' : 'Crop')),
+                DataColumn(label: Text(LocalizationService.isTamil ? 'பூச்சி' : 'Pest')),
+                DataColumn(label: Text(LocalizationService.isTamil ? 'அளவு' : 'Dosage')),
+                DataColumn(label: Text(LocalizationService.isTamil ? 'கரைசல்' : 'Dilution')),
+                DataColumn(label: Text(LocalizationService.isTamil ? 'காத்திருப்பு காலம்' : 'Waiting')),
+                const DataColumn(label: Text('')),
               ],
               rows: List.generate(_usageTableRows.length, (index) {
                 final row = _usageTableRows[index];
@@ -1577,6 +1941,7 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
   }
 
   Widget _buildVariantsEditor() {
+    final isTa = LocalizationService.isTamil;
     return Container(
       decoration: _sectionDecoration(),
       padding: const EdgeInsets.all(12),
@@ -1585,7 +1950,7 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Variants & Pricing', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+              Text(isTa ? 'மாறுபாடுகள் மற்றும் விலை' : 'Variants & Pricing', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
               TextButton.icon(
                 onPressed: () => setState(() => _variantRows.add({
                   'size': TextEditingController(),
@@ -1613,9 +1978,9 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
                     children: [
                       Row(
                         children: [
-                          Expanded(child: _buildTextField(controller: row['size']!, labelKey: 'Size / Pack', keyboardType: TextInputType.text)),
+                          Expanded(child: _buildTextField(controller: row['size']!, labelKey: isTa ? 'அளவு' : 'Size / Pack', keyboardType: TextInputType.text)),
                           const SizedBox(width: 8),
-                          Expanded(child: _buildTextField(controller: row['unit']!, labelKey: 'Unit', keyboardType: TextInputType.text)),
+                          Expanded(child: _buildTextField(controller: row['unit']!, labelKey: isTa ? 'அலகு' : 'Unit', keyboardType: TextInputType.text)),
                           IconButton(
                             icon: const Icon(Icons.delete_outline, color: Colors.red),
                             onPressed: () => setState(() => _variantRows.removeAt(index)),
@@ -1625,9 +1990,9 @@ class _OwnerEditProductScreenState extends State<OwnerEditProductScreen> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Expanded(child: _buildTextField(controller: row['price']!, labelKey: 'Sell Price', keyboardType: TextInputType.number, prefixText: '₹')),
+                          Expanded(child: _buildTextField(controller: row['price']!, labelKey: isTa ? 'விற்பனை விலை' : 'Sell Price', keyboardType: TextInputType.number, prefixText: '₹')),
                           const SizedBox(width: 8),
-                          Expanded(child: _buildTextField(controller: row['mrp']!, labelKey: 'MRP', keyboardType: TextInputType.number, prefixText: '₹')),
+                          Expanded(child: _buildTextField(controller: row['mrp']!, labelKey: isTa ? 'அதிகபட்ச விலை' : 'MRP', keyboardType: TextInputType.number, prefixText: '₹')),
                         ],
                       ),
                     ],

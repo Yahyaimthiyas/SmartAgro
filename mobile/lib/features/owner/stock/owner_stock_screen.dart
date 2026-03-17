@@ -125,19 +125,29 @@ class _OwnerStockScreenState extends State<OwnerStockScreen> {
   Widget _buildSearchAndFilter() {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
       child: Column(
         children: [
           TextField(
             onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
+            style: GoogleFonts.inter(fontWeight: FontWeight.w500),
             decoration: InputDecoration(
               hintText: LocalizationService.tr('search_hint'),
-              prefixIcon: const Icon(Icons.search, color: Colors.grey),
+              hintStyle: GoogleFonts.inter(color: AppColors.textSecondary),
+              prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary),
               filled: true,
-              fillColor: const Color(0xFFF8F9FA),
+              fillColor: AppColors.background.withOpacity(0.5),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
+                borderSide: BorderSide(color: AppColors.borderLight),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: AppColors.borderLight),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             ),
@@ -230,9 +240,9 @@ class _FilterChip extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.outfit(
             fontSize: 13,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
             color: isSelected ? Colors.white : AppColors.textSecondary,
           ),
         ),
@@ -292,7 +302,6 @@ class _ProductStockCard extends StatelessWidget {
            )
         ]
       ),
-      padding: const EdgeInsets.all(12), // Tighter padding
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -300,14 +309,14 @@ class _ProductStockCard extends StatelessWidget {
           Stack(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
                 child: Container(
-                   width: 90,
-                   height: 90,
-                   color: const Color(0xFFF5F5F5),
+                   width: 100,
+                   height: 100,
+                   color: AppColors.background,
                    child: imageUrl != null && imageUrl.isNotEmpty
                       ? CommonImage(imageUrl: imageUrl, fit: BoxFit.cover)
-                      : Icon(Icons.image_not_supported, color: Colors.grey.shade400, size: 32),
+                      : Icon(Icons.inventory_2_outlined, color: Colors.grey.shade300, size: 40),
                 ),
               ),
               if (isOfferActive)
@@ -348,8 +357,8 @@ class _ProductStockCard extends StatelessWidget {
                               child: Text(
                                 displayName,
                                 style: isTa 
-                                   ? GoogleFonts.notoSansTamil(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF1A1C1E))
-                                   : GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF1A1C1E)),
+                                   ? GoogleFonts.notoSansTamil(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary)
+                                   : GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                                 maxLines: 1, 
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -453,7 +462,7 @@ class _ProductStockCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       // Edit button
-                      ElevatedButton.icon(
+                      ElevatedButton(
                         onPressed: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
@@ -461,22 +470,21 @@ class _ProductStockCard extends StatelessWidget {
                             ),
                           );
                         },
-                        icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.white),
-                        label: Text(
-                           'Edit',
-                           style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                           ),
-                        ),
                         style: ElevatedButton.styleFrom(
                            backgroundColor: AppColors.primary,
+                           foregroundColor: Colors.white,
                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                            shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                            ),
                            elevation: 0,
+                        ),
+                        child: Text(
+                           'Manage',
+                           style: GoogleFonts.outfit(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                           ),
                         ),
                       )
                    ],

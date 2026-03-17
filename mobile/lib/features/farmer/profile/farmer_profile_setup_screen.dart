@@ -30,10 +30,6 @@ class _FarmerProfileSetupScreenState extends State<FarmerProfileSetupScreen> {
   final _cityController = TextEditingController();
   final _districtController = TextEditingController();
   final _stateController = TextEditingController();
-  final _landSizeController = TextEditingController(); // [NEW]
-  
-  String? _selectedCrop; // [NEW]
-  final List<String> _crops = ['Rice', 'Cotton', 'Sugarcane', 'Groundnut', 'Vegetables', 'Maize', 'Banana', 'Others'];
   
   File? _imageFile;
   bool _isLoading = false;
@@ -43,6 +39,16 @@ class _FarmerProfileSetupScreenState extends State<FarmerProfileSetupScreen> {
   void initState() {
     super.initState();
     _fetchExistingData();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _streetController.dispose();
+    _cityController.dispose();
+    _districtController.dispose();
+    _stateController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchExistingData() async {
@@ -62,9 +68,6 @@ class _FarmerProfileSetupScreenState extends State<FarmerProfileSetupScreen> {
               _districtController.text = addr['district'] ?? '';
               _stateController.text = addr['state'] ?? '';
             }
-            // Pre-fill crop details
-            _selectedCrop = data['primaryCrop'];
-            _landSizeController.text = (data['landSize'] as num? ?? '').toString();
           });
         }
       }
@@ -133,8 +136,6 @@ class _FarmerProfileSetupScreenState extends State<FarmerProfileSetupScreen> {
         'name': _nameController.text.trim(),
         if (imageUrl != null) 'profileImage': imageUrl, // [NEW] Save URL
         'isProfileBasicComplete': true, // Mark basic profile as done
-        'primaryCrop': _selectedCrop, // [NEW]
-        'landSize': double.tryParse(_landSizeController.text.trim()) ?? 0.0, // [NEW]
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
@@ -236,41 +237,6 @@ class _FarmerProfileSetupScreenState extends State<FarmerProfileSetupScreen> {
                     validator: (v) => v == null || v.isEmpty ? LocalizationService.tr('profile_setup_error_name') : null,
                     decoration: InputDecoration(
                       hintText: LocalizationService.tr('profile_setup_name_hint'),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  Text(
-                    "${LocalizationService.tr('profile_setup_crop_label')} *",
-                    style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    value: _selectedCrop,
-                    decoration: InputDecoration(
-                      hintText: LocalizationService.tr('profile_setup_crop_hint'),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    ),
-                    items: _crops.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                    onChanged: (v) => setState(() => _selectedCrop = v),
-                    validator: (v) => v == null ? LocalizationService.tr('crop_error_crop_type_required') : null,
-                  ),
-                  const SizedBox(height: 20),
-
-                  Text(
-                    "${LocalizationService.tr('profile_setup_land_label')} *",
-                    style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _landSizeController,
-                    keyboardType: TextInputType.number,
-                    validator: (v) => v == null || v.isEmpty ? LocalizationService.tr('crop_error_area_required') : null,
-                    decoration: InputDecoration(
-                      hintText: LocalizationService.tr('profile_setup_land_hint'),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     ),

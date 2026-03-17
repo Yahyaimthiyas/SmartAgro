@@ -189,7 +189,11 @@ class _FarmerProductListScreenState extends State<FarmerProductListScreen> {
     Query<Map<String, dynamic>> query = FirebaseFirestore.instance.collection('products');
     
     if (widget.categoryId != null) {
-      query = query.where('categoryId', isEqualTo: widget.categoryId);
+      if (widget.categoryId == 'offers') {
+        query = query.where('offerPercentage', isGreaterThan: 0);
+      } else {
+        query = query.where('categoryId', isEqualTo: widget.categoryId);
+      }
     }
     
     if (widget.brand != null) {

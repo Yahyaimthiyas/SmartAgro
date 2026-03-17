@@ -13,6 +13,7 @@ import '../../../core/services/gemini_advisory_service.dart';
 import 'package:provider/provider.dart';
 import '../cart/cart_provider.dart';
 import '../products/farmer_product_details_screen.dart';
+import '../products/widgets/product_grid_card.dart';
 import '../../../core/widgets/common_image.dart';
 
 class FarmerAiPlantDoctorScreen extends StatefulWidget {
@@ -29,24 +30,19 @@ class _FarmerAiPlantDoctorScreenState extends State<FarmerAiPlantDoctorScreen> {
   Map<String, dynamic>? _analysisResult;
   String? _errorMessage;
   
-  // Products fetched based on remedy suggestion
   List<DocumentSnapshot> _recommendedProducts = [];
   bool _isLoadingProducts = false;
 
-  // Advisory Messages State
   Map<String, bool> _readState = {};
   Map<String, bool> _deletedState = {};
-
 
   @override
   void initState() {
     super.initState();
-    _loadReadState();
+    _loadStates();
   }
 
-
-
-  Future<void> _loadReadState() async {
+  Future<void> _loadStates() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
     try {
@@ -63,54 +59,7 @@ class _FarmerAiPlantDoctorScreenState extends State<FarmerAiPlantDoctorScreen> {
         deleted[d.id] = data['deleted'] == true;
       }
       if (mounted) {
-        setState(() {
-          _readState = read;
-          _deletedState = deleted;
-        });
-      }
-    } catch (_) {}
-  }
-
-  Future<void> _markRead(String messageId) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-    try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('advisory_reads')
-          .doc(messageId)
-          .set({
-        'readAt': FieldValue.serverTimestamp(),
-        'deleted': false,
-      }, SetOptions(merge: true));
-      if (mounted) {
-        setState(() {
-          _readState[messageId] = true;
-          _deletedState[messageId] = false;
-        });
-      }
-    } catch (_) {}
-  }
-
-  Future<void> _hideMessage(String messageId) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-    try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('advisory_reads')
-          .doc(messageId)
-          .set({
-        'deleted': true,
-        'readAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-      if (mounted) {
-        setState(() {
-          _deletedState[messageId] = true;
-          _readState[messageId] = true;
-        });
+        setState(() { _readState = read; _deletedState = deleted; });
       }
     } catch (_) {}
   }
@@ -130,23 +79,17 @@ class _FarmerAiPlantDoctorScreenState extends State<FarmerAiPlantDoctorScreen> {
           _analysisResult = null;
           _errorMessage = null;
           _recommendedProducts = [];
+          _isAnalyzing = true;
         });
         _analyzeImage(pickedFile);
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to pick image: $e')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
   Future<void> _analyzeImage(XFile image) async {
-    setState(() {
-      _isAnalyzing = true;
-      _errorMessage = null;
-    });
-
     try {
       final productsSnapshot = await FirebaseFirestore.instance.collection('products').get();
       final List<Map<String, dynamic>> shopProducts = productsSnapshot.docs.map((doc) {
@@ -183,7 +126,6 @@ class _FarmerAiPlantDoctorScreenState extends State<FarmerAiPlantDoctorScreen> {
 
   Future<void> _fetchRecommendedProducts(List<String> productIds) async {
     if (productIds.isEmpty) return;
-    
     setState(() => _isLoadingProducts = true);
     try {
        final querySnapshot = await FirebaseFirestore.instance
@@ -191,27 +133,8 @@ class _FarmerAiPlantDoctorScreenState extends State<FarmerAiPlantDoctorScreen> {
            .where(FieldPath.documentId, whereIn: productIds.take(10).toList())
            .get();
 
-       // Fetch average ratings
-       final productsWithRank = <_ProductRank>[];
-       for (final doc in querySnapshot.docs) {
-         final feedbackSnap = await FirebaseFirestore.instance
-             .collection('feedbacks')
-             .where('productId', isEqualTo: doc.id)
-             .get();
-         
-         double avg = 5.0; // Default if no reviews
-         if (feedbackSnap.docs.isNotEmpty) {
-           final total = feedbackSnap.docs.fold<double>(0, (sum, d) => sum + (d.data()['rating'] ?? 5));
-           avg = total / feedbackSnap.docs.length;
-         }
-         productsWithRank.add(_ProductRank(doc, avg));
-       }
-
-       // Sort: Highest rating first
-       productsWithRank.sort((a, b) => b.rating.compareTo(a.rating));
-
        setState(() {
-          _recommendedProducts = productsWithRank.map((r) => r.doc).toList();
+          _recommendedProducts = querySnapshot.docs;
           _isLoadingProducts = false;
        });
     } catch (e) {
@@ -219,44 +142,36 @@ class _FarmerAiPlantDoctorScreenState extends State<FarmerAiPlantDoctorScreen> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(
-          LocalizationService.tr('home_advisory'),
-          style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
+        title: Text(LocalizationService.isTamil ? 'AI பயிர் டாக்டர்' : 'AI Plant Doctor'),
+        backgroundColor: AppColors.background,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: AppColors.textPrimary),
+            icon: const Icon(Icons.search_rounded),
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FarmerDiseaseSearchScreen())),
           ),
           const SizedBox(width: 8),
         ],
       ),
       body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildAiDoctorHeader(),
+            _buildAiHeader(),
             const SizedBox(height: 24),
             _buildActionButtons(),
             const SizedBox(height: 32),
-            _buildImagePreview(),
+            if (_selectedImage != null) _buildImagePreview(),
             if (_isAnalyzing) _buildAnalyzingState(),
             if (_errorMessage != null) _buildErrorState(),
             if (_analysisResult != null && !_isAnalyzing) _buildAnalysisResults(),
-            const SizedBox(height: 48),
-            _buildAdvisoryMessagesSection(),
+            const SizedBox(height: 40),
+            _buildAdvisorySection(),
             const SizedBox(height: 40),
           ],
         ),
@@ -264,44 +179,36 @@ class _FarmerAiPlantDoctorScreenState extends State<FarmerAiPlantDoctorScreen> {
     );
   }
 
-  Widget _buildAiDoctorHeader() {
+  Widget _buildAiHeader() {
     return Container(
       padding: const EdgeInsets.all(24),
+      width: double.infinity,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFE8F5E9), Color(0xFFC8E6C9)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: AppColors.primaryContainer,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.psychology_outlined, size: 48, color: AppColors.primary),
+            child: const Icon(Icons.psychology_outlined, size: 40, color: AppColors.primary),
           ),
           const SizedBox(height: 16),
           Text(
             LocalizationService.tr('ai_doctor_title'),
-            style: GoogleFonts.notoSansTamil(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF1B5E20),
-            ),
+            textAlign: TextAlign.center,
+            style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 8),
           Text(
             LocalizationService.tr('ai_doctor_subtitle'),
             textAlign: TextAlign.center,
-            style: GoogleFonts.notoSansTamil(
-              fontSize: 14,
-              color: const Color(0xFF2E7D32),
-            ),
+            style: GoogleFonts.inter(fontSize: 14, color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -312,28 +219,40 @@ class _FarmerAiPlantDoctorScreenState extends State<FarmerAiPlantDoctorScreen> {
     return Row(
       children: [
         Expanded(
-          child: ElevatedButton.icon(
-            onPressed: _isAnalyzing ? null : () => _pickImage(ImageSource.camera),
-            icon: const Icon(Icons.camera_alt),
-            label: Text(LocalizationService.tr('btn_take_photo')),
+          child: ElevatedButton(
+            onPressed: () => _pickImage(ImageSource.camera),
             style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
               backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.camera_alt_rounded, size: 20),
+                SizedBox(width: 8),
+                Text('Camera'),
+              ],
             ),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: OutlinedButton.icon(
-            onPressed: _isAnalyzing ? null : () => _pickImage(ImageSource.gallery),
-            icon: const Icon(Icons.photo_library),
-            label: Text(LocalizationService.tr('btn_upload_gallery')),
+          child: OutlinedButton(
+            onPressed: () => _pickImage(ImageSource.gallery),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              foregroundColor: AppColors.primary,
-              side: const BorderSide(color: AppColors.primary, width: 2),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              side: const BorderSide(color: AppColors.border),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.photo_library_rounded, size: 20),
+                SizedBox(width: 8),
+                Text('Gallery'),
+              ],
             ),
           ),
         ),
@@ -342,469 +261,101 @@ class _FarmerAiPlantDoctorScreenState extends State<FarmerAiPlantDoctorScreen> {
   }
 
   Widget _buildImagePreview() {
-    if (_selectedImage == null) return const SizedBox.shrink();
-    return Column(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Image.file(
-            File(_selectedImage!.path),
-            height: 250,
-            width: double.infinity,
-            fit: BoxFit.cover,
-          ),
-        ),
-        const SizedBox(height: 24),
-      ],
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Image.file(File(_selectedImage!.path), height: 240, width: double.infinity, fit: BoxFit.cover),
     );
   }
 
   Widget _buildAnalyzingState() {
-    return Column(
-      children: [
-        const Center(child: CircularProgressIndicator()),
-        const SizedBox(height: 16),
-        Center(
-          child: Text(
-            LocalizationService.tr('ai_analyzing'),
-            style: GoogleFonts.notoSansTamil(color: AppColors.textSecondary, fontWeight: FontWeight.bold),
-          ),
-        ),
-      ],
-    );
+     return Padding(
+       padding: const EdgeInsets.symmetric(vertical: 32),
+       child: Column(
+         children: [
+           const CircularProgressIndicator(strokeWidth: 3),
+           const SizedBox(height: 16),
+           Text(LocalizationService.tr('ai_analyzing'), style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+         ],
+       ),
+     );
   }
 
   Widget _buildErrorState() {
     return Container(
+      margin: const EdgeInsets.only(top: 24),
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.red.shade100),
-      ),
-      child: Column(
-        children: [
-          Icon(Icons.error_outline_rounded, color: Colors.red.shade400, size: 48),
-          const SizedBox(height: 16),
-          Text(
-            _errorMessage!,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.notoSansTamil(
-              color: Colors.red.shade800,
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _selectedImage == null ? null : () => _analyzeImage(_selectedImage!),
-              icon: const Icon(Icons.refresh_rounded),
-              label: Text(
-                LocalizationService.tr('btn_retry_analysis') ?? 'Retry Analysis',
-                style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade400,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 0,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAdvisoryMessagesSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Icon(Icons.forum_outlined, color: AppColors.primary),
-            const SizedBox(width: 12),
-            Text(
-              LocalizationService.tr('advisory_messages_appbar'),
-              style: GoogleFonts.notoSansTamil(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: FirebaseFirestore.instance
-              .collection('advisory_messages')
-              .orderBy('createdAt', descending: true)
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: LinearProgressIndicator());
-            }
-
-            final docs = snapshot.data?.docs ?? [];
-            final visible = docs.where((d) => _deletedState[d.id] != true).toList();
-
-            if (visible.isEmpty) {
-              return Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Center(
-                  child: Text(
-                    LocalizationService.tr('advisory_messages_empty'),
-                    style: GoogleFonts.notoSansTamil(color: AppColors.textSecondary),
-                  ),
-                ),
-              );
-            }
-
-            return Column(
-              children: visible.map((doc) {
-                final data = doc.data();
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: _buildAdvisoryMessageTile(doc.id, data),
-                );
-              }).toList(),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAdvisoryMessageTile(String id, Map<String, dynamic> data) {
-    final titleTa = data['title_ta'] as String? ?? '';
-    final titleEn = data['title_en'] as String? ?? '';
-    final summaryTa = data['summary_ta'] as String? ?? '';
-    final type = data['type'] as String? ?? 'general';
-    final ts = data['createdAt'] as Timestamp?;
-    final created = ts?.toDate();
-    final isRead = _readState[id] == true;
-
-    Color typeColor;
-    IconData typeIcon;
-    switch (type) {
-      case 'pest':
-        typeColor = Colors.redAccent;
-        typeIcon = Icons.bug_report_rounded;
-        break;
-      case 'weather':
-        typeColor = Colors.blueAccent;
-        typeIcon = Icons.wb_sunny_rounded;
-        break;
-      default:
-        typeColor = AppColors.primary;
-        typeIcon = Icons.article_rounded;
-    }
-
-    return InkWell(
-      onTap: () {
-        _markRead(id);
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => FarmerVoiceAdvisoryScreen(messageId: id)),
-        );
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: isRead ? Colors.white : const Color(0xFFF0F9FF),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))
-          ],
-        ),
-        child: IntrinsicHeight(
-          child: Row(
-            children: [
-              Container(
-                width: 6,
-                decoration: BoxDecoration(
-                  color: typeColor,
-                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: typeColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(typeIcon, size: 12, color: typeColor),
-                                const SizedBox(width: 4),
-                                Text(
-                                  type.toUpperCase(),
-                                  style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.bold, color: typeColor),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (created != null)
-                            Text(
-                              '${created.day}/${created.month}',
-                              style: GoogleFonts.poppins(fontSize: 10, color: AppColors.textSecondary),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        LocalizationService.isTamil ? titleTa : titleEn,
-                        style: GoogleFonts.notoSansTamil(
-                          fontSize: 15,
-                          fontWeight: isRead ? FontWeight.w600 : FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        summaryTa,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.notoSansTamil(fontSize: 12, color: AppColors.textSecondary),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.red.shade100)),
+      child: Text(_errorMessage!, textAlign: TextAlign.center, style: TextStyle(color: Colors.red.shade900)),
     );
   }
 
   Widget _buildAnalysisResults() {
     final res = _analysisResult!;
-    
     if (res['isPlant'] == false) {
       return Container(
+        margin: const EdgeInsets.only(top: 24),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(16)),
-        child: Column(
-          children: [
-            const Icon(Icons.warning_amber_rounded, size: 48, color: Colors.orange),
-            const SizedBox(height: 12),
-            Text(
-              LocalizationService.tr('ai_error_no_crops'),
-              textAlign: TextAlign.center,
-              style: GoogleFonts.notoSansTamil(fontSize: 16, color: Colors.orange.shade900),
-            ),
-          ],
-        ),
+        child: Text(LocalizationService.tr('ai_error_no_crops'), textAlign: TextAlign.center, style: TextStyle(color: Colors.orange.shade900)),
       );
     }
 
     if (res['isHealthy'] == true) {
-       return Container(
+      return Container(
+        margin: const EdgeInsets.only(top: 24),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(16)),
-        child: Column(
-          children: [
-            const Icon(Icons.check_circle_outline, size: 48, color: Colors.green),
-            const SizedBox(height: 12),
-            Text(
-              "Your plant appears to be healthy! No diseases detected.",
-              textAlign: TextAlign.center,
-              style: GoogleFonts.notoSansTamil(fontSize: 16, color: Colors.green.shade900),
-            ),
-          ],
-        ),
+        child: const Text("Your plant looks healthy!", textAlign: TextAlign.center, style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
       );
     }
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-             color: Colors.red.shade50,
-             borderRadius: BorderRadius.circular(16),
-             border: Border.all(color: Colors.red.shade100)
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.coronavirus_outlined, color: Colors.red),
-                  const SizedBox(width: 8),
-                  Text(
-                    LocalizationService.tr('diagnosis_title'),
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.red.shade900),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                res['diseaseName'] ?? 'Unknown Disease',
-                style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red.shade900),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                res['cause'] ?? '',
-                style: GoogleFonts.notoSansTamil(fontSize: 14, color: Colors.red.shade800),
-              ),
-            ],
-          ),
+        const SizedBox(height: 24),
+        _buildResultCard(
+          Icons.coronavirus_outlined,
+          LocalizationService.tr('diagnosis_title'),
+          res['diseaseName'] ?? 'Disease Found',
+          res['cause'],
+          AppColors.googleRed,
         ),
-        
-        const SizedBox(height: 20),
-
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-             color: Colors.blue.shade50,
-             borderRadius: BorderRadius.circular(16),
-             border: Border.all(color: Colors.blue.shade100)
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.medical_services_outlined, color: Colors.blue),
-                  const SizedBox(width: 8),
-                  Text(
-                    LocalizationService.tr('remedy_title'),
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.blue.shade900),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                res['remedySuggestion'] ?? 'General Care',
-                style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue.shade900),
-              ),
-              const SizedBox(height: 16),
-              
-              _buildDetailRow(Icons.science_outlined, "Dosage", res['dosage']),
-              _buildDetailRow(Icons.layers_outlined, LocalizationService.tr('label_application_method'), res['applicationMethod']),
-              _buildDetailRow(Icons.access_time_outlined, LocalizationService.tr('label_best_time'), res['bestTime']),
-              _buildDetailRow(Icons.gpp_maybe_outlined, LocalizationService.tr('label_safety_precautions'), res['safetyPrecautions'], isUrgent: true),
-            ],
-          ),
-        ),
-
         const SizedBox(height: 16),
-
-        if (res['expertTips'] != null && res['expertTips'].toString().isNotEmpty)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-               color: AppColors.primaryLight.withOpacity(0.2),
-               borderRadius: BorderRadius.circular(16),
-               border: Border.all(color: AppColors.primary.withOpacity(0.3))
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.stars, color: AppColors.primary, size: 24),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        LocalizationService.tr('label_expert_tips'),
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: AppColors.primaryDark),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        res['expertTips'],
-                        style: GoogleFonts.notoSansTamil(fontSize: 14, color: AppColors.textPrimary),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-        const SizedBox(height: 32),
-        
-        if (_isLoadingProducts) ...[
-           const Center(child: CircularProgressIndicator()),
-        ] else if (_recommendedProducts.isNotEmpty) ...[
-           _buildShopRecommendations(),
-        ] else if (!_isLoadingProducts && _analysisResult != null && _analysisResult!['isPlant'] == true && _analysisResult!['isHealthy'] == false) ...[
-           Container(
-             padding: const EdgeInsets.all(16),
-             margin: const EdgeInsets.only(top: 16),
-             decoration: BoxDecoration(
-               color: Colors.grey.shade100,
-               borderRadius: BorderRadius.circular(16),
-               border: Border.all(color: Colors.grey.shade300)
-             ),
-             child: Column(
-               children: [
-                 Icon(Icons.inventory_2_outlined, color: Colors.grey.shade600, size: 32),
-                 const SizedBox(height: 8),
-                 const Text(
-                   "No specific products for this disease found in the shop's current inventory. Please consult a local agricultural expert.",
-                   textAlign: TextAlign.center,
-                   style: TextStyle(fontSize: 14, color: Colors.black54),
-                 ),
-               ],
-             ),
-           ),
-        ]
+        _buildResultCard(
+          Icons.medical_services_outlined,
+          LocalizationService.tr('remedy_title'),
+          res['remedySuggestion'] ?? 'Treatments',
+          "Dosage: ${res['dosage'] ?? 'N/A'}\nMethod: ${res['applicationMethod'] ?? 'N/A'}",
+          AppColors.googleBlue,
+        ),
+        if (_recommendedProducts.isNotEmpty) _buildShopRecommendations(),
       ],
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String? value, {bool isUrgent = false}) {
-    if (value == null || value.isEmpty) return const SizedBox.shrink();
-    
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
+  Widget _buildResultCard(IconData icon, String title, String main, String? sub, Color accentColor) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: isUrgent ? Colors.red : Colors.blue.shade700),
+              Icon(icon, color: accentColor, size: 24),
               const SizedBox(width: 8),
-              Text(
-                label,
-                style: GoogleFonts.poppins(
-                  fontSize: 12, 
-                  fontWeight: FontWeight.bold, 
-                  color: isUrgent ? Colors.red : Colors.blue.shade800
-                ),
-              ),
+              Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: accentColor)),
             ],
           ),
-          const SizedBox(height: 4),
-          Padding(
-            padding: const EdgeInsets.only(left: 24.0),
-            child: Text(
-              value,
-              style: GoogleFonts.notoSansTamil(
-                fontSize: 14, 
-                color: isUrgent ? Colors.red.shade900 : AppColors.textPrimary,
-                fontWeight: isUrgent ? FontWeight.w500 : FontWeight.normal,
-              ),
-            ),
-          ),
+          const SizedBox(height: 12),
+          Text(main, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+          if (sub != null) ...[
+            const SizedBox(height: 8),
+            Text(sub, style: GoogleFonts.inter(fontSize: 14, color: AppColors.textSecondary, height: 1.5)),
+          ],
         ],
       ),
     );
@@ -814,124 +365,19 @@ class _FarmerAiPlantDoctorScreenState extends State<FarmerAiPlantDoctorScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          LocalizationService.tr('shop_recommendations'),
-          style: GoogleFonts.notoSansTamil(
-            fontSize: 18, 
-            fontWeight: FontWeight.bold, 
-            color: AppColors.textPrimary
-          ),
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
+        Text(LocalizationService.isTamil ? 'அறிந்துரைக்கப்படும் பொருட்கள்' : 'Recommended Products', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
         SizedBox(
-          height: 240,
+          height: 220,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
             itemCount: _recommendedProducts.length,
             itemBuilder: (context, index) {
               final doc = _recommendedProducts[index];
-              final data = doc.data() as Map<String, dynamic>;
-              
-              final isTa = LocalizationService.isTamil;
-              final name = isTa ? (data['name_ta'] ?? data['name_en']) : (data['name_en'] ?? data['name_ta']);
-              final price = (data['price'] ?? 0).toDouble();
-              final imageUrl = data['imageUrl'] as String?;
-              final unitTa = data['unit_ta'] ?? '';
-              final unitEn = data['unit_en'] ?? '';
-              final stock = data['stock'] as int? ?? 0;
-
-              return Container(
-                width: 160,
-                margin: const EdgeInsets.only(right: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    )
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                         Navigator.push(
-                           context,
-                           MaterialPageRoute(builder: (_) => FarmerProductDetailsScreen(productId: doc.id, cropId: null)),
-                         );
-                      },
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                        child: imageUrl != null && imageUrl.isNotEmpty 
-                          ? CommonImage(imageUrl: imageUrl, width: 160, height: 110, fit: BoxFit.cover)
-                          : Container(width: 160, height: 110, color: Colors.grey.shade200, child: const Icon(Icons.image, color: Colors.grey)),
-                      ),
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              name,
-                              style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, fontSize: 13),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              "₹$price",
-                              style: GoogleFonts.poppins(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 14),
-                            ),
-                            const Spacer(),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: stock <= 0 ? null : () {
-                                  context.read<CartProvider>().addItem(
-                                    productId: doc.id,
-                                    nameTa: data['name_ta'] ?? '',
-                                    nameEn: data['name_en'] ?? '',
-                                    price: price,
-                                    unitTa: unitTa,
-                                    unitEn: unitEn,
-                                    imageUrl: imageUrl,
-                                    quantity: 1,
-                                  );
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(LocalizationService.tr('snackbar_added_to_cart')),
-                                      backgroundColor: Colors.green,
-                                      behavior: SnackBarBehavior.floating,
-                                      duration: const Duration(seconds: 1),
-                                    ),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 4),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  elevation: 0,
-                                ),
-                                child: Text(
-                                  LocalizationService.tr('btn_add_to_cart'),
-                                  style: GoogleFonts.notoSansTamil(fontSize: 10, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  ],
-                ),
+              return Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: SizedBox(width: 160, child: ProductGridCard(productId: doc.id, data: doc.data() as Map<String, dynamic>)),
               );
             },
           ),
@@ -939,27 +385,49 @@ class _FarmerAiPlantDoctorScreenState extends State<FarmerAiPlantDoctorScreen> {
       ],
     );
   }
+
+  Widget _buildAdvisorySection() {
+     return Column(
+       crossAxisAlignment: CrossAxisAlignment.start,
+       children: [
+         Text(LocalizationService.tr('advisory_messages_appbar'), style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
+         const SizedBox(height: 12),
+         StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: FirebaseFirestore.instance.collection('advisory_messages').limit(3).snapshots(),
+            builder: (context, snapshot) {
+               final docs = snapshot.data?.docs ?? [];
+               if (docs.isEmpty) return const SizedBox.shrink();
+               return Column(
+                  children: docs.map((d) => _buildMessageTile(d)).toList(),
+               );
+            },
+         ),
+       ],
+     );
+  }
+
+  Widget _buildMessageTile(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final isTa = LocalizationService.isTamil;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: const Icon(Icons.article_outlined, color: AppColors.primary),
+        title: Text(isTa ? data['title_ta'] : data['title_en'], style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FarmerVoiceAdvisoryScreen(messageId: doc.id))),
+      ),
+    );
+  }
 }
-
-class _StatusInfo {
-  final String key;
-  final String titleTa;
-  final String titleEn;
-  final String subtitleTa;
-  final String subtitleEn;
-
-  const _StatusInfo({
-    required this.key,
-    required this.titleTa,
-    required this.titleEn,
-    required this.subtitleTa,
-    required this.subtitleEn,
-  });
-}
-
 class _ProductRank {
-  final QueryDocumentSnapshot<Map<String, dynamic>> doc;
+  final DocumentSnapshot doc;
   final double rating;
   _ProductRank(this.doc, this.rating);
 }
-

@@ -26,7 +26,7 @@ class _AadharVerificationScreenState extends State<AadharVerificationScreen> {
   Future<void> _verifyAadharLimit() async {
     final aadhar = _aadharController.text.trim();
     if (aadhar.length != 12 || !RegExp(r'^\d{12}$').hasMatch(aadhar)) {
-      setState(() => _errorMessage = LocalizationService.isTamil ? 'சரியான 12-இலக்க ஆதார் எண் உள்ளிடவும்' : 'Enter a valid 12-digit Aadhar number');
+      setState(() => _errorMessage = LocalizationService.tr('error_invalid_aadhar'));
       return;
     }
 
@@ -65,10 +65,12 @@ class _AadharVerificationScreenState extends State<AadharVerificationScreen> {
       if (totalPurchasedLiters + widget.requestedLiters > 20.0) {
         final remaining = (20.0 - totalPurchasedLiters).clamp(0, 20.0).toStringAsFixed(1);
         final requestedStr = widget.requestedLiters.toStringAsFixed(1);
+        
+        final msg = LocalizationService.tr('error_aadhar_limit_exceeded')
+            .replaceAll('{remaining}', remaining)
+            .replaceAll('{requested}', requestedStr);
         setState(() {
-          _errorMessage = LocalizationService.isTamil 
-              ? 'வரம்பு மீறப்பட்டுள்ளது. உங்கள் கார்டில் $remaining மீதம் உள்ளது (கோரப்பட்டது $requestedStr L).' 
-              : 'Per Aadhar limit exceeded. You have $remaining L left (Requested: $requestedStr L). Maximum limit is 20L.';
+          _errorMessage = msg;
         });
         setState(() => _isLoading = false);
         return;
@@ -82,7 +84,7 @@ class _AadharVerificationScreenState extends State<AadharVerificationScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Error checking Aadhar limit: $e';
+          _errorMessage = '${LocalizationService.tr('error_aadhar_check_failed')}: $e';
           _isLoading = false;
         });
       }
@@ -92,7 +94,7 @@ class _AadharVerificationScreenState extends State<AadharVerificationScreen> {
   void _sendOtp() {
     final phone = _phoneController.text.trim();
     if (phone.length != 10 || !RegExp(r'^\d{10}$').hasMatch(phone)) {
-      setState(() => _errorMessage = LocalizationService.isTamil ? 'சரியான தொலைபேசி எண் உள்ளிடவும்' : 'Enter a valid phone number');
+      setState(() => _errorMessage = LocalizationService.tr('enter_phone_subtitle'));
       return;
     }
 
@@ -110,7 +112,7 @@ class _AadharVerificationScreenState extends State<AadharVerificationScreen> {
         // Instruction to use 123456 as mock Aadhar OTP
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(LocalizationService.isTamil ? 'OTP அனுப்பப்பட்டது (Mock OTP: 123456)' : 'OTP Sent successfully (Mock OTP: 123456)')),
+        SnackBar(content: Text(LocalizationService.tr('msg_otp_sent_mock'))),
       );
     });
   }
@@ -118,7 +120,7 @@ class _AadharVerificationScreenState extends State<AadharVerificationScreen> {
   void _verifyOtp() {
     final otp = _otpController.text.trim();
     if (otp != '123456') {
-      setState(() => _errorMessage = LocalizationService.isTamil ? 'தவறான OTP' : 'Invalid OTP validation failed');
+      setState(() => _errorMessage = LocalizationService.tr('gate_error_incorrect_pin'));
       return;
     }
 
@@ -132,7 +134,7 @@ class _AadharVerificationScreenState extends State<AadharVerificationScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(
-          LocalizationService.isTamil ? 'ஆதார் சரிபார்ப்பு' : 'Aadhar Verification',
+          LocalizationService.tr('title_aadhar_verification'),
           style: GoogleFonts.notoSansTamil(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: Colors.transparent,
@@ -209,10 +211,10 @@ class _AadharVerificationScreenState extends State<AadharVerificationScreen> {
                     ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
                     : Text(
                         _currentStep == 1 
-                          ? (LocalizationService.isTamil ? 'வரம்பை சரிபார்' : 'Check Limit')
+                          ? LocalizationService.tr('btn_check_limit')
                         : _currentStep == 2
-                          ? (LocalizationService.isTamil ? 'OTP அனுப்பு' : 'Send OTP')
-                          : (LocalizationService.isTamil ? 'சரிபார்' : 'Verify'),
+                          ? LocalizationService.tr('get_otp')
+                          : LocalizationService.tr('gate_title_verify'),
                         style: GoogleFonts.notoSansTamil(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                 ),
@@ -229,14 +231,12 @@ class _AadharVerificationScreenState extends State<AadharVerificationScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          LocalizationService.isTamil ? 'பூச்சிக்கொல்லி வாங்குவதற்கான ஆதார் விவரங்கள்' : 'Aadhar Details for Pesticides',
+          LocalizationService.tr('label_aadhar_details_pest'),
           style: GoogleFonts.notoSansTamil(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
         ),
         const SizedBox(height: 8),
         Text(
-          LocalizationService.isTamil 
-              ? 'பூச்சிக்கொல்லி மருந்துகளின் கொள்முதல் வரம்பை சரிபார்க்க உங்கள் ஆதார் எண்ணை உள்ளிடவும்.' 
-              : 'Enter your Aadhar number to verify purchase limits for pesticides.',
+          LocalizationService.tr('msg_aadhar_verify_desc'),
           style: GoogleFonts.notoSansTamil(fontSize: 14, color: AppColors.textSecondary),
         ),
         const SizedBox(height: 24),
@@ -246,7 +246,7 @@ class _AadharVerificationScreenState extends State<AadharVerificationScreen> {
           maxLength: 12,
           decoration: InputDecoration(
             hintText: 'xxxx xxxx xxxx',
-            labelText: LocalizationService.isTamil ? 'ஆதார் எண்' : 'Aadhar Number',
+            labelText: LocalizationService.tr('label_aadhar_number'),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             prefixIcon: const Icon(Icons.credit_card),
           ),
@@ -260,14 +260,12 @@ class _AadharVerificationScreenState extends State<AadharVerificationScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          LocalizationService.isTamil ? 'ஆதார் இணைக்கப்பட்ட தொலைபேசி எண்' : 'Aadhar Linked Mobile Number',
+          LocalizationService.tr('label_aadhar_linked_phone'),
           style: GoogleFonts.notoSansTamil(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
         ),
         const SizedBox(height: 8),
         Text(
-          LocalizationService.isTamil 
-              ? 'உங்கள் ஆதாருடன் இணைக்கப்பட்ட 10-இலக்க எண்ணை உள்ளிடவும்.' 
-              : 'Please enter the 10-digit mobile number linked to the Aadhar card - ${_aadharController.text}',
+          LocalizationService.tr('msg_aadhar_phone_desc').replaceAll('{aadhar}', _aadharController.text),
           style: GoogleFonts.notoSansTamil(fontSize: 14, color: AppColors.textSecondary),
         ),
         const SizedBox(height: 24),
@@ -278,7 +276,7 @@ class _AadharVerificationScreenState extends State<AadharVerificationScreen> {
           readOnly: true, // Auto-fetched from Aadhar details collection
           decoration: InputDecoration(
             hintText: '9876543210',
-            labelText: LocalizationService.isTamil ? 'தொலைபேசி எண்' : 'Phone Number',
+            labelText: LocalizationService.tr('label_phone_number'),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             prefixIcon: const Icon(Icons.phone),
             prefixText: '+91 ',
@@ -293,14 +291,12 @@ class _AadharVerificationScreenState extends State<AadharVerificationScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          LocalizationService.isTamil ? 'OTP ஐ உள்ளிடவும்' : 'Enter OTP',
+          LocalizationService.tr('enter_otp'),
           style: GoogleFonts.notoSansTamil(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
         ),
         const SizedBox(height: 8),
         Text(
-          LocalizationService.isTamil 
-              ? '+91 ${_phoneController.text} எண்ணிற்கு அனுப்பப்பட்ட 6-இலக்க OTP ஐ உள்ளிட்டவும்.' 
-              : 'Enter the 6-digit OTP sent to +91 ${_phoneController.text}.',
+          LocalizationService.tr('enter_otp_subtitle_phone').replaceAll('{phone}', _phoneController.text),
           style: GoogleFonts.notoSansTamil(fontSize: 14, color: AppColors.textSecondary),
         ),
         const SizedBox(height: 24),

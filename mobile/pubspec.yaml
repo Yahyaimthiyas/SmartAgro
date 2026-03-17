@@ -72,6 +72,9 @@ dependencies:
   android_intent_plus: ^5.0.3
   onesignal_flutter: ^5.4.4
   vibration: ^3.1.8
+  firebase_app_check: ^0.4.1+5
+  shimmer: ^3.0.0
+  animate_do: ^4.2.0
 
 dev_dependencies:
   flutter_test:

@@ -578,6 +578,7 @@ Future<void> _updateOrderStatus(BuildContext context, String orderId, String new
           'status': newStatus,
           if (newStatus == 'ready') 'readyAt': FieldValue.serverTimestamp(),
           if (newStatus == 'picked') 'pickedAt': FieldValue.serverTimestamp(),
+          if (newStatus == 'cancelled') 'cancelledAt': FieldValue.serverTimestamp(),
           if (creditExpiry != null) 'creditExpiryDate': Timestamp.fromDate(creditExpiry),
        });
 

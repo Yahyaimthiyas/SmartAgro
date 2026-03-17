@@ -7,6 +7,7 @@ import '../../../core/constants/colors.dart';
 import '../../../core/widgets/common_image.dart'; // [NEW]
 import '../../../core/services/localization_service.dart';
 import '../cart/cart_provider.dart';
+import '../checkout/farmer_checkout_screen.dart';
 import '../../../core/utils/price_utils.dart';
 
 class FarmerProductDetailsScreen extends StatefulWidget {
@@ -20,14 +21,15 @@ class FarmerProductDetailsScreen extends StatefulWidget {
   });
 
   @override
-  State<FarmerProductDetailsScreen> createState() => _FarmerProductDetailsScreenState();
+  State<FarmerProductDetailsScreen> createState() =>
+      _FarmerProductDetailsScreenState();
 }
 
 class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
     with SingleTickerProviderStateMixin {
   int _quantity = 1;
   Map<String, dynamic>? _selectedVariant;
-  
+
   // Cache the product data to prevent reloading on tab switches
   Map<String, dynamic>? _cachedProductData;
   bool _isLoading = true;
@@ -44,12 +46,13 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
           .collection('products')
           .doc(widget.productId)
           .get();
-      
+
       if (mounted) {
         setState(() {
           _cachedProductData = doc.exists ? doc.data() : null;
           if (_cachedProductData != null) {
-            final variants = _cachedProductData!['variants'] as List<dynamic>? ?? [];
+            final variants =
+                _cachedProductData!['variants'] as List<dynamic>? ?? [];
             if (variants.isNotEmpty) {
               _selectedVariant = variants[0] as Map<String, dynamic>;
             }
@@ -75,13 +78,16 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _cachedProductData == null
-              ? Center(
-                  child: Text(
-                    LocalizationService.tr('msg_product_not_found'),
-                    style: GoogleFonts.poppins(fontSize: 16, color: AppColors.textSecondary),
-                  ),
-                )
-              : _buildProductContent(_cachedProductData!, isTa),
+          ? Center(
+              child: Text(
+                LocalizationService.tr('msg_product_not_found'),
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            )
+          : _buildProductContent(_cachedProductData!, isTa),
     );
   }
 
@@ -100,7 +106,7 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
     String stockLabelEn;
     Color stockColor;
     Color stockBgColor;
-    
+
     if (stock <= 0) {
       stockLabelTa = LocalizationService.tr('stock_out_ta');
       stockLabelEn = LocalizationService.tr('stock_out_en');
@@ -121,10 +127,9 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
     final displayName = LocalizationService.pickTaEn(nameTa, nameEn);
     final displayUnit = LocalizationService.pickTaEn(unitTa, unitEn);
     final stockText = isTa ? stockLabelTa : stockLabelEn;
-    
-    // [NEW] Privacy: Hide exact count, just show status
-    final stockDisplay = stockText; 
 
+    // [NEW] Privacy: Hide exact count, just show status
+    final stockDisplay = stockText;
 
     final maxQty = stock > 0 ? stock : 1;
     if (_quantity > maxQty) _quantity = maxQty;
@@ -137,26 +142,38 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
     final usageTable = data['usageTable'] as List<dynamic>? ?? [];
     final variants = data['variants'] as List<dynamic>? ?? [];
 
-    final currentPrice = _selectedVariant != null ? (_selectedVariant!['price'] as num) : PriceUtils.calculateFinalPrice(data);
-    final currentMRP = _selectedVariant != null ? (_selectedVariant!['mrp'] as num) : price;
-    final currentUnit = _selectedVariant != null ? "${_selectedVariant!['size']} ${_selectedVariant!['unit']}" : displayUnit;
+    final currentPrice = _selectedVariant != null
+        ? (_selectedVariant!['price'] as num)
+        : PriceUtils.calculateFinalPrice(data);
+    final currentMRP = _selectedVariant != null
+        ? (_selectedVariant!['mrp'] as num)
+        : price;
+    final currentUnit = _selectedVariant != null
+        ? "${_selectedVariant!['size']} ${_selectedVariant!['unit']}"
+        : displayUnit;
 
     return Stack(
       children: [
         CustomScrollView(
           slivers: [
-             SliverAppBar(
+            SliverAppBar(
               expandedHeight: 300,
               pinned: true,
               backgroundColor: Colors.white,
               elevation: 0,
               leading: IconButton(
-                 icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-                 onPressed: () => Navigator.of(context).pop(),
-                 style: IconButton.styleFrom(
-                   backgroundColor: AppColors.primary.withOpacity(0.4),
-                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                 ),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+                style: IconButton.styleFrom(
+                  backgroundColor: AppColors.primary.withOpacity(0.4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
               flexibleSpace: FlexibleSpaceBar(
                 background: Stack(
@@ -166,27 +183,44 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
                         ? CommonImage(imageUrl: imageUrl, fit: BoxFit.cover)
                         : Container(
                             color: Colors.grey[100],
-                            child: const Icon(Icons.image_outlined, size: 80, color: Colors.grey),
+                            child: const Icon(
+                              Icons.image_outlined,
+                              size: 80,
+                              color: Colors.grey,
+                            ),
                           ),
                     if (salesCount >= 10)
                       Positioned(
                         top: 100,
                         right: 20,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.orange.shade700,
                             borderRadius: BorderRadius.circular(20),
-                            boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                            boxShadow: [
+                              BoxShadow(color: Colors.black26, blurRadius: 4),
+                            ],
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.local_fire_department, color: Colors.white, size: 16),
+                              const Icon(
+                                Icons.local_fire_department,
+                                color: Colors.white,
+                                size: 16,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 isTa ? 'அதிக விற்பனை' : 'Hot Selling',
-                                style: GoogleFonts.poppins(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ],
                           ),
@@ -224,27 +258,45 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
                       ),
                     ),
                     const SizedBox(height: 16),
-                    _buildRatingAndStock(data, isTa, stockDisplay, stockColor, stockBgColor),
+                    _buildRatingAndStock(
+                      data,
+                      isTa,
+                      stockDisplay,
+                      stockColor,
+                      stockBgColor,
+                    ),
                     const SizedBox(height: 24),
                     _buildPricingSection(currentPrice, currentMRP, isTa),
                     const SizedBox(height: 16),
-                    if (variants.isNotEmpty) _buildVariantSelector(variants, isTa),
+                    if (variants.isNotEmpty)
+                      _buildVariantSelector(variants, isTa),
                     const SizedBox(height: 24),
                     _buildSocialProofing(data, isTa),
                     const SizedBox(height: 32),
                     _buildInfoTable(data, isTa),
                     const SizedBox(height: 32),
-                    if (technicalName.isNotEmpty) _buildCheaperAlternatives(technicalName, currentPrice, isTa),
+                    if (technicalName.isNotEmpty)
+                      _buildCheaperAlternatives(
+                        technicalName,
+                        currentPrice,
+                        isTa,
+                      ),
                     const SizedBox(height: 32),
-                    _buildDescription(isTa ? descriptionTa : descriptionEn, isTa),
+                    _buildDescription(
+                      isTa ? descriptionTa : descriptionEn,
+                      isTa,
+                    ),
                     const SizedBox(height: 32),
                     _buildReviewsSection(widget.productId, isTa),
                     const SizedBox(height: 32),
-                    if (keyFeatures.isNotEmpty) _buildKeyFeaturesSection(keyFeatures, isTa),
+                    if (keyFeatures.isNotEmpty)
+                      _buildKeyFeaturesSection(keyFeatures, isTa),
                     const SizedBox(height: 32),
-                    if (usageTable.isNotEmpty) _buildUsageTable(usageTable, isTa),
+                    if (usageTable.isNotEmpty)
+                      _buildUsageTable(usageTable, isTa),
                     const SizedBox(height: 32),
-                    if (expertAdvice.isNotEmpty) _buildExpertAdviceSection(expertAdvice, isTa),
+                    if (expertAdvice.isNotEmpty)
+                      _buildExpertAdviceSection(expertAdvice, isTa),
                     const SizedBox(height: 100),
                   ],
                 ),
@@ -252,126 +304,200 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
             ),
           ],
         ),
-        
+
         // [MODERNIZED] Bottom Bar
         Positioned(
-           left: 0, 
-           right: 0, 
-           bottom: 0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                boxShadow: [
-                   BoxShadow(
-                     color: Colors.black.withOpacity(0.12),
-                     blurRadius: 30,
-                     offset: const Offset(0, -10),
-                   ),
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(32),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 30,
+                  offset: const Offset(0, -10),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              child: Row(
+                children: [
+                  // Quantity Selector
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 4,
+                    ),
+                    child: Row(
+                      children: [
+                        _qtyButton(
+                          icon: Icons.remove,
+                          onTap: () {
+                            if (_quantity > 1) setState(() => _quantity--);
+                          },
+                        ),
+                        SizedBox(
+                          width: 40,
+                          child: Text(
+                            '$_quantity',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        _qtyButton(
+                          icon: Icons.add,
+                          onTap: () {
+                            // Note: Max stock check is done in build(), but good to check here too if possible
+                            setState(() => _quantity++);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Add to Cart Button
+                  Expanded(
+                    child: SizedBox(
+                      height: 56,
+                      child: OutlinedButton(
+                        onPressed: stock <= 0
+                            ? null
+                            : () {
+                                context.read<CartProvider>().addItem(
+                                  productId: widget.productId,
+                                  nameTa: nameTa,
+                                  nameEn: nameEn,
+                                  price: currentPrice.toDouble(),
+                                  unitTa: currentUnit,
+                                  unitEn: currentUnit,
+                                  imageUrl: imageUrl,
+                                  quantity: _quantity,
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      LocalizationService.tr(
+                                            'snackbar_added_to_cart',
+                                          ) ??
+                                          'Added to Cart',
+                                      style: GoogleFonts.notoSansTamil(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    backgroundColor: Colors.green.shade800,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    margin: const EdgeInsets.all(16),
+                                  ),
+                                );
+                              },
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                          foregroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            LocalizationService.tr('btn_add_to_cart') ?? 'Cart',
+                            style: GoogleFonts.notoSansTamil(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Buy Now Button
+                  Expanded(
+                    child: SizedBox(
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: stock <= 0
+                            ? null
+                            : () {
+                                final directItem = CartItem(
+                                  productId: widget.productId,
+                                  nameTa: nameTa,
+                                  nameEn: nameEn,
+                                  price: currentPrice.toDouble(),
+                                  quantity: _quantity,
+                                  unitTa: currentUnit,
+                                  unitEn: currentUnit,
+                                  imageUrl: imageUrl,
+                                  lastUpdated: DateTime.now(),
+                                );
+
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => FarmerCheckoutScreen(directItem: directItem),
+                                  ),
+                                );
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          elevation: 4,
+                          shadowColor: AppColors.primary.withOpacity(0.4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            LocalizationService.tr('btn_buy_now') ?? 'Buy Now',
+                            style: GoogleFonts.notoSansTamil(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
-              child: SafeArea(
-                 child: Row(
-                   children: [
-                     // Quantity Selector
-                     Container(
-                       decoration: BoxDecoration(
-                         color: Colors.grey[100],
-                         borderRadius: BorderRadius.circular(16),
-                         border: Border.all(color: Colors.grey[200]!),
-                       ),
-                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                       child: Row(
-                         children: [
-                           _qtyButton(
-                             icon: Icons.remove, 
-                             onTap: () {
-                               if (_quantity > 1) setState(() => _quantity--);
-                             }
-                           ),
-                           SizedBox(
-                             width: 40,
-                             child: Text(
-                               '$_quantity',
-                               textAlign: TextAlign.center,
-                               style: GoogleFonts.poppins(
-                                 fontSize: 18, 
-                                 fontWeight: FontWeight.bold
-                               ),
-                             ),
-                           ),
-                           _qtyButton(
-                             icon: Icons.add, 
-                             onTap: () {
-                                // Note: Max stock check is done in build(), but good to check here too if possible
-                                setState(() => _quantity++); 
-                             }
-                           ),
-                         ],
-                       ),
-                     ),
-                     const SizedBox(width: 16),
-                     
-                     // Add to Cart Button
-                     Expanded(
-                       child: SizedBox(
-                         height: 56,
-                         child: ElevatedButton(
-                           onPressed: stock <= 0
-                               ? null
-                               : () {
-                                   context.read<CartProvider>().addItem(
-                                         productId: widget.productId,
-                                         nameTa: nameTa,
-                                         nameEn: nameEn,
-                                          price: currentPrice.toDouble(),
-                                          unitTa: currentUnit,
-                                          unitEn: currentUnit,
-                                         imageUrl: imageUrl,
-                                         quantity: _quantity,
-                                       );
-                                   ScaffoldMessenger.of(context).showSnackBar(
-                                     SnackBar(
-                                       content: Text(
-                                         LocalizationService.tr('snackbar_added_to_cart'),
-                                         style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.w600),
-                                       ),
-                                       backgroundColor: Colors.green.shade800,
-                                       behavior: SnackBarBehavior.floating,
-                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                       margin: const EdgeInsets.all(16),
-                                     ),
-                                   );
-                                 },
-                           style: ElevatedButton.styleFrom(
-                             backgroundColor: AppColors.primary,
-                             foregroundColor: Colors.white,
-                             elevation: 4,
-                             shadowColor: AppColors.primary.withOpacity(0.4),
-                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                           ),
-                           child: Text(
-                             LocalizationService.tr('btn_add_to_cart'),
-                             style: GoogleFonts.notoSansTamil(
-                               fontSize: 18,
-                               fontWeight: FontWeight.bold,
-                             ),
-                           ),
-                         ),
-                       ),
-                     ),
-                   ],
-                 ),
-              ),
-           ),
+            ),
+          ),
         ),
       ],
     );
   }
 
-
-  Widget _buildRatingAndStock(Map<String, dynamic> data, bool isTa, String stockDisplay, Color stockColor, Color stockBgColor) {
+  Widget _buildRatingAndStock(
+    Map<String, dynamic> data,
+    bool isTa,
+    String stockDisplay,
+    Color stockColor,
+    Color stockBgColor,
+  ) {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('feedbacks')
@@ -380,14 +506,14 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
       builder: (context, snapshot) {
         double avgRating = 0.0;
         int reviewCount = 0;
-        
+
         if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
-           reviewCount = snapshot.data!.docs.length;
-           double total = 0;
-           for (var doc in snapshot.data!.docs) {
-              total += (doc.data()['rating'] as num? ?? 0).toDouble();
-           }
-           avgRating = total / reviewCount;
+          reviewCount = snapshot.data!.docs.length;
+          double total = 0;
+          for (var doc in snapshot.data!.docs) {
+            total += (doc.data()['rating'] as num? ?? 0).toDouble();
+          }
+          avgRating = total / reviewCount;
         }
 
         return Row(
@@ -397,31 +523,46 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
                 const Icon(Icons.star, color: Colors.amber, size: 20),
                 const SizedBox(width: 4),
                 Text(
-                  reviewCount > 0 ? avgRating.toStringAsFixed(1) : '0.0', 
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)
+                  reviewCount > 0 ? avgRating.toStringAsFixed(1) : '0.0',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '($reviewCount ${isTa ? "மதிப்பீடுகள்" : "Reviews"})', 
-                  style: GoogleFonts.poppins(color: Colors.grey, fontSize: 13)
+                  '($reviewCount ${isTa ? "மதிப்பீடுகள்" : "Reviews"})',
+                  style: GoogleFonts.poppins(color: Colors.grey, fontSize: 13),
                 ),
               ],
             ),
             const Spacer(),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(color: stockBgColor, borderRadius: BorderRadius.circular(8)),
-              child: Text(stockDisplay, style: GoogleFonts.notoSansTamil(fontSize: 12, fontWeight: FontWeight.bold, color: stockColor)),
+              decoration: BoxDecoration(
+                color: stockBgColor,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                stockDisplay,
+                style: GoogleFonts.notoSansTamil(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: stockColor,
+                ),
+              ),
             ),
           ],
         );
-      }
+      },
     );
   }
 
   Widget _buildPricingSection(num currentPrice, num currentMRP, bool isTa) {
     final savings = currentMRP - currentPrice;
-    final offPercent = currentMRP > 0 ? ((savings / currentMRP) * 100).toInt() : 0;
+    final offPercent = currentMRP > 0
+        ? ((savings / currentMRP) * 100).toInt()
+        : 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -429,18 +570,48 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text('₹${currentPrice.toStringAsFixed(0)}', style: GoogleFonts.poppins(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.primary)),
+            Text(
+              '₹${currentPrice.toStringAsFixed(0)}',
+              style: GoogleFonts.poppins(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
+            ),
             const SizedBox(width: 12),
-            Text('₹${currentMRP.toStringAsFixed(0)}', style: GoogleFonts.poppins(fontSize: 18, decoration: TextDecoration.lineThrough, color: Colors.grey)),
+            Text(
+              '₹${currentMRP.toStringAsFixed(0)}',
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                decoration: TextDecoration.lineThrough,
+                color: Colors.grey,
+              ),
+            ),
             const SizedBox(width: 12),
             if (offPercent > 0)
-              Text('$offPercent% OFF', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red)),
+              Text(
+                '$offPercent% OFF',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red,
+                ),
+              ),
           ],
         ),
         if (savings > 0)
-          Text('Save ₹${savings.toStringAsFixed(0)}', style: GoogleFonts.poppins(color: Colors.green.shade700, fontWeight: FontWeight.w600)),
+          Text(
+            'Save ₹${savings.toStringAsFixed(0)}',
+            style: GoogleFonts.poppins(
+              color: Colors.green.shade700,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         const SizedBox(height: 8),
-        Text('Inclusive of all taxes', style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12)),
+        Text(
+          'Inclusive of all taxes',
+          style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
+        ),
       ],
     );
   }
@@ -449,7 +620,10 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(isTa ? 'அளவு:' : 'Size:', style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold)),
+        Text(
+          isTa ? 'அளவு:' : 'Size:',
+          style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 12),
         SizedBox(
           height: 100,
@@ -467,15 +641,34 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: isSelected ? AppColors.primary : Colors.grey.shade300, width: isSelected ? 2 : 1),
-                    color: isSelected ? AppColors.primary.withOpacity(0.05) : Colors.white,
+                    border: Border.all(
+                      color: isSelected
+                          ? AppColors.primary
+                          : Colors.grey.shade300,
+                      width: isSelected ? 2 : 1,
+                    ),
+                    color: isSelected
+                        ? AppColors.primary.withOpacity(0.05)
+                        : Colors.white,
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text("${v['size']} ${v['unit']}", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14)),
+                      Text(
+                        "${v['size']} ${v['unit']}",
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
                       const SizedBox(height: 4),
-                      Text("₹${v['price']}", style: GoogleFonts.poppins(fontSize: 14, color: AppColors.primary)),
+                      Text(
+                        "₹${v['price']}",
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: AppColors.primary,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -490,15 +683,25 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
   Widget _buildSocialProofing(Map<String, dynamic> data, bool isTa) {
     final salesCount = data['salesCount'] as int? ?? 0;
     if (salesCount < 5) return const SizedBox();
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Row(
         children: [
           const Icon(Icons.flash_on, color: Colors.amber),
           const SizedBox(width: 12),
-          Expanded(child: Text(isTa ? '$salesCount+ விவசாயிகள் இதனை வாங்கியுள்ளனர்' : '$salesCount+ farmers bought this recently', style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.w600))),
+          Expanded(
+            child: Text(
+              isTa
+                  ? '$salesCount+ விவசாயிகள் இதனை வாங்கியுள்ளனர்'
+                  : '$salesCount+ farmers bought this recently',
+              style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.w600),
+            ),
+          ),
         ],
       ),
     );
@@ -516,22 +719,48 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Overview', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18)),
+        Text(
+          'Overview',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
         const SizedBox(height: 16),
         Table(
           border: TableBorder.all(color: Colors.grey.shade200),
-          children: rows.map((r) => TableRow(
-            children: [
-              Padding(padding: const EdgeInsets.all(12), child: Text(r['label']!, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.blueGrey))),
-              Padding(padding: const EdgeInsets.all(12), child: Text(r['value']!.toString(), style: GoogleFonts.poppins())),
-            ],
-          )).toList(),
+          children: rows
+              .map(
+                (r) => TableRow(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Text(
+                        r['label']!,
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.blueGrey,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Text(
+                        r['value']!.toString(),
+                        style: GoogleFonts.poppins(),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+              .toList(),
         ),
       ],
     );
   }
 
-  Widget _buildCheaperAlternatives(String technicalName, num currentPrice, bool isTa) {
+  Widget _buildCheaperAlternatives(
+    String technicalName,
+    num currentPrice,
+    bool isTa,
+  ) {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('products')
@@ -540,33 +769,70 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
           .limit(3)
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const SizedBox();
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+          return const SizedBox();
         final alternatives = snapshot.data!.docs;
-        
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(isTa ? 'அதே தரம், குறைந்த விலை!' : 'Same Chemical, Get Same Result', style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.orange.shade800)),
+            Text(
+              isTa
+                  ? 'அதே தரம், குறைந்த விலை!'
+                  : 'Same Chemical, Get Same Result',
+              style: GoogleFonts.notoSansTamil(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Colors.orange.shade800,
+              ),
+            ),
             const SizedBox(height: 16),
             ...alternatives.map((alt) {
               final altData = alt.data();
               final altPrice = PriceUtils.calculateFinalPrice(altData);
-              final savingPer = (((currentPrice - altPrice) / currentPrice) * 100).toInt();
+              final savingPer =
+                  (((currentPrice - altPrice) / currentPrice) * 100).toInt();
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: ListTile(
-                  leading: CommonImage(imageUrl: altData['imageUrl'], width: 60, height: 60),
-                  title: Text(LocalizationService.pickTaEn(altData['name_ta'], altData['name_en'])),
-                  subtitle: Text("Save $savingPer% Cheaper", style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                  trailing: Text("₹${altPrice.toStringAsFixed(0)}", style: const TextStyle(fontWeight: FontWeight.bold)),
-                  onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FarmerProductDetailsScreen(productId: alt.id))),
+                  leading: CommonImage(
+                    imageUrl: altData['imageUrl'],
+                    width: 60,
+                    height: 60,
+                  ),
+                  title: Text(
+                    LocalizationService.pickTaEn(
+                      altData['name_ta'],
+                      altData['name_en'],
+                    ),
+                  ),
+                  subtitle: Text(
+                    "Save $savingPer% Cheaper",
+                    style: const TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  trailing: Text(
+                    "₹${altPrice.toStringAsFixed(0)}",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  onTap: () => Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          FarmerProductDetailsScreen(productId: alt.id),
+                    ),
+                  ),
                 ),
               );
             }).toList(),
           ],
         );
-      }
+      },
     );
   }
 
@@ -574,9 +840,18 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(isTa ? 'விளக்கம்' : 'Product Description', style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, fontSize: 18)),
+        Text(
+          isTa ? 'விளக்கம்' : 'Product Description',
+          style: GoogleFonts.notoSansTamil(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
         const SizedBox(height: 12),
-        Text(desc, style: GoogleFonts.poppins(height: 1.6, color: Colors.black87)),
+        Text(
+          desc,
+          style: GoogleFonts.poppins(height: 1.6, color: Colors.black87),
+        ),
       ],
     );
   }
@@ -586,19 +861,35 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 24),
-        Text(isTa ? 'சிறப்பம்சங்கள்' : 'Key Features', style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, fontSize: 18)),
-        const SizedBox(height: 12),
-        ...features.map((f) => Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.check_circle_outline, color: Colors.green, size: 20),
-              const SizedBox(width: 12),
-              Expanded(child: Text(f.toString(), style: GoogleFonts.poppins())),
-            ],
+        Text(
+          isTa ? 'சிறப்பம்சங்கள்' : 'Key Features',
+          style: GoogleFonts.notoSansTamil(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
           ),
-        )).toList(),
+        ),
+        const SizedBox(height: 12),
+        ...features
+            .map(
+              (f) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.check_circle_outline,
+                      color: Colors.green,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(f.toString(), style: GoogleFonts.poppins()),
+                    ),
+                  ],
+                ),
+              ),
+            )
+            .toList(),
       ],
     );
   }
@@ -607,7 +898,13 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(isTa ? 'பயன்படுத்தும் முறை' : 'Usage and Crops', style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, fontSize: 18)),
+        Text(
+          isTa ? 'பயன்படுத்தும் முறை' : 'Usage and Crops',
+          style: GoogleFonts.notoSansTamil(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
         const SizedBox(height: 16),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -618,14 +915,20 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
               TableRow(
                 decoration: BoxDecoration(color: Colors.grey.shade100),
                 children: [
-                  _headerCell('Crops'), _headerCell('Target Pest'), _headerCell('Dosage/Acre'), _headerCell('Waiting'),
+                  _headerCell('Crops'),
+                  _headerCell('Target Pest'),
+                  _headerCell('Dosage/Acre'),
+                  _headerCell('Waiting'),
                 ],
               ),
               ...usage.map((u) {
                 final m = u as Map<String, dynamic>;
                 return TableRow(
                   children: [
-                    _cell(m['crop'] ?? '-'), _cell(m['pest'] ?? '-'), _cell(m['dosageAcre'] ?? '-'), _cell(m['waiting'] ?? '-'),
+                    _cell(m['crop'] ?? '-'),
+                    _cell(m['pest'] ?? '-'),
+                    _cell(m['dosageAcre'] ?? '-'),
+                    _cell(m['waiting'] ?? '-'),
                   ],
                 );
               }).toList(),
@@ -636,25 +939,53 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
     );
   }
 
-  Widget _headerCell(String t) => Padding(padding: const EdgeInsets.all(12), child: Text(t, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 12)));
-  Widget _cell(String t) => Padding(padding: const EdgeInsets.all(12), child: Text(t.toString(), style: GoogleFonts.poppins(fontSize: 12)));
+  Widget _headerCell(String t) => Padding(
+    padding: const EdgeInsets.all(12),
+    child: Text(
+      t,
+      style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 12),
+    ),
+  );
+  Widget _cell(String t) => Padding(
+    padding: const EdgeInsets.all(12),
+    child: Text(t.toString(), style: GoogleFonts.poppins(fontSize: 12)),
+  );
 
   Widget _buildExpertAdviceSection(String advice, bool isTa) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.blue.shade100)),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.blue.shade100),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-               const CircleAvatar(backgroundColor: Colors.blue, child: Icon(Icons.person, color: Colors.white)),
-               const SizedBox(width: 12),
-               Text(isTa ? 'நிபுணர் ஆலோசனை' : 'Expert Advice', style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, color: Colors.blue.shade900)),
+              const CircleAvatar(
+                backgroundColor: Colors.blue,
+                child: Icon(Icons.person, color: Colors.white),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                isTa ? 'நிபுணர் ஆலோசனை' : 'Expert Advice',
+                style: GoogleFonts.notoSansTamil(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue.shade900,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
-          Text('"$advice"', style: GoogleFonts.poppins(fontStyle: FontStyle.italic, color: Colors.blueGrey.shade800)),
+          Text(
+            '"$advice"',
+            style: GoogleFonts.poppins(
+              fontStyle: FontStyle.italic,
+              color: Colors.blueGrey.shade800,
+            ),
+          ),
         ],
       ),
     );
@@ -665,23 +996,49 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          isTa ? 'வாடிக்கையாளர் மதிப்பீடுகள்' : 'Customer Reviews', 
-          style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, fontSize: 18)
+          isTa ? 'வாடிக்கையாளர் மதிப்பீடுகள்' : 'Customer Reviews',
+          style: GoogleFonts.notoSansTamil(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
         const SizedBox(height: 16),
         StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: FirebaseFirestore.instance
               .collection('feedbacks')
               .where('productId', isEqualTo: productId)
-              .orderBy('createdAt', descending: true)
-              .limit(5)
               .snapshots(),
           builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  "Error loading reviews",
+                  style: TextStyle(color: Colors.red.shade800, fontSize: 12),
+                ),
+              );
+            }
+
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            final docs = List<DocumentSnapshot<Map<String, dynamic>>>.from(
+              snapshot.data?.docs ?? [],
+            );
+
+            // Client-side sorting
+            docs.sort((a, b) {
+              final t1 = a.data()?['createdAt'] as Timestamp?;
+              final t2 = b.data()?['createdAt'] as Timestamp?;
+              if (t1 == null || t2 == null) return 0;
+              return t2.compareTo(t1); // Descending
+            });
+
+            // Limit to top 5
+            final displayDocs = docs.take(5).toList();
+
+            if (displayDocs.isEmpty) {
               return Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -691,16 +1048,21 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
                 ),
                 child: Center(
                   child: Text(
-                    isTa ? 'மதிப்பீடுகள் எதுவும் இல்லை' : 'No original reviews yet.',
-                    style: GoogleFonts.poppins(color: Colors.grey, fontSize: 14),
+                    isTa
+                        ? 'மதிப்பீடுகள் எதுவும் இல்லை'
+                        : 'No original reviews yet.',
+                    style: GoogleFonts.poppins(
+                      color: Colors.grey,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
               );
             }
 
             return Column(
-              children: snapshot.data!.docs.map((doc) {
-                final fb = doc.data();
+              children: displayDocs.map((doc) {
+                final fb = doc.data()!;
                 final rating = fb['rating'] as int? ?? 5;
                 final comment = fb['comment'] as String? ?? '';
                 final userName = fb['userName'] as String? ?? 'Farmer';
@@ -725,47 +1087,96 @@ class _FarmerProductDetailsScreenState extends State<FarmerProductDetailsScreen>
                             children: [
                               CircleAvatar(
                                 radius: 14,
-                                backgroundColor: AppColors.primary.withOpacity(0.1),
-                                child: Text(userName.substring(0, 1).toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                                backgroundColor: AppColors.primary.withOpacity(
+                                  0.1,
+                                ),
+                                child: Text(
+                                  (userName.trim().isNotEmpty)
+                                      ? userName
+                                            .trim()
+                                            .substring(0, 1)
+                                            .toUpperCase()
+                                      : '?',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                               const SizedBox(width: 8),
-                              Text(userName, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13)),
+                              Text(
+                                userName,
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
                             ],
                           ),
                           Row(
-                            children: List.generate(5, (index) => Icon(
-                              index < rating ? Icons.star : Icons.star_border,
-                              color: Colors.amber,
-                              size: 14,
-                            )),
+                            children: List.generate(
+                              5,
+                              (index) => Icon(
+                                index < rating ? Icons.star : Icons.star_border,
+                                color: Colors.amber,
+                                size: 14,
+                              ),
+                            ),
                           ),
                         ],
                       ),
                       if (comment.isNotEmpty) ...[
                         const SizedBox(height: 10),
-                        Text(comment, style: GoogleFonts.poppins(fontSize: 13, color: Colors.black87)),
+                        Text(
+                          comment,
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: Colors.black87,
+                          ),
+                        ),
                       ],
                       if (imageUrl != null) ...[
                         const SizedBox(height: 10),
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: CommonImage(imageUrl: imageUrl, height: 120, width: double.infinity, fit: BoxFit.cover),
+                          child: CommonImage(
+                            imageUrl: imageUrl,
+                            height: 120,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ],
                       if (ownerReply != null) ...[
-                         const SizedBox(height: 12),
-                         Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(12)),
-                            child: Column(
-                               crossAxisAlignment: CrossAxisAlignment.start,
-                               children: [
-                                  Text(isTa ? 'ஆசிரியர் பதில்:' : 'Owner Reply:', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.blue)),
-                                  const SizedBox(height: 4),
-                                  Text(ownerReply, style: const TextStyle(fontSize: 12, color: Colors.black87)),
-                               ],
-                            ),
-                         ),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isTa ? 'ஆசிரியர் பதில்:' : 'Owner Reply:',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                  color: Colors.blue,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                ownerReply,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ],
                   ),

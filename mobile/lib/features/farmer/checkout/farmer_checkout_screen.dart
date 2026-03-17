@@ -17,7 +17,9 @@ import '../../notifications/models/app_notification.dart';
 import 'aadhar_verification_screen.dart';
 
 class FarmerCheckoutScreen extends StatefulWidget {
-  const FarmerCheckoutScreen({super.key});
+  final CartItem? directItem;
+
+  const FarmerCheckoutScreen({super.key, this.directItem});
 
   @override
   State<FarmerCheckoutScreen> createState() => _FarmerCheckoutScreenState();
@@ -46,6 +48,10 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
+    final checkoutItems = widget.directItem != null ? [widget.directItem!] : cart.items;
+    final totalAmount = widget.directItem != null 
+        ? widget.directItem!.price * widget.directItem!.quantity 
+        : cart.totalAmount;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -66,10 +72,10 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
           ),
         ),
       ),
-      body: cart.items.isEmpty
+      body: checkoutItems.isEmpty
           ? Center(
               child: Text(
-                'கூடை காலியாக உள்ளது',
+                LocalizationService.tr('msg_cart_empty'),
                 style: GoogleFonts.notoSansTamil(fontSize: 14, color: AppColors.textSecondary),
               ),
             )
@@ -125,7 +131,7 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
                                 padding: const EdgeInsets.all(20),
                                 child: Column(
                                   children: [
-                                    for (final item in cart.items) ...[
+                                    for (final item in checkoutItems) ...[
                                       Padding(
                                         padding: const EdgeInsets.only(bottom: 12),
                                         child: Row(
@@ -175,7 +181,7 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
                                           style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
                                         ),
                                         Text(
-                                          '₹${cart.totalAmount.toStringAsFixed(0)}',
+                                          '₹${totalAmount.toStringAsFixed(0)}',
                                           style: GoogleFonts.notoSansTamil(
                                             fontSize: 20,
                                             fontWeight: FontWeight.bold,
@@ -278,7 +284,7 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
                         
                         // [NEW] Dosage Advice Section
                         Text(
-                          LocalizationService.isTamil ? 'அளவு ஆலோசனை தேவையா?' : 'Need Dosage Advice?',
+                          LocalizationService.tr('label_need_dosage_advice'),
                           style: GoogleFonts.notoSansTamil(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -301,7 +307,7 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(
-                                      LocalizationService.isTamil ? 'ஆசிரியரின் அளவு ஆலோசனை தேவை' : 'I need dosage advice from the owner',
+                                      LocalizationService.tr('label_dosage_advice_request'),
                                       style: GoogleFonts.notoSansTamil(fontSize: 14),
                                     ),
                                   ),
@@ -357,7 +363,7 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
                                         ),
                                         if (diseases.isNotEmpty) ...[
                                           const SizedBox(height: 8),
-                                          const Text('Suggested Diseases:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
+                                          Text(LocalizationService.tr('label_suggested_diseases'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
                                           const SizedBox(height: 4),
                                           Wrap(
                                             spacing: 8,
@@ -408,7 +414,7 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
                                               const Icon(Icons.add_a_photo_outlined, color: Colors.grey),
                                               const SizedBox(height: 8),
                                               Text(
-                                                LocalizationService.isTamil ? 'நோய் பாதிப்பு படம் (கட்டாயம்)' : 'Upload Disease Photo (Required)',
+                                                LocalizationService.tr('label_disease_photo_required'),
                                                 style: GoogleFonts.notoSansTamil(fontSize: 12, color: Colors.grey),
                                               ),
                                             ],
@@ -485,13 +491,13 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
                                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                               children: [
                                                 Text(
-                                                  count > 0 ? '$percent% ${LocalizationService.isTamil ? 'வெற்றி' : 'Success Rate'} ($count)' : (LocalizationService.isTamil ? 'புள்ளிவிவரங்கள் இல்லை' : 'No stats yet'),
+                                                  count > 0 ? '$percent% ${LocalizationService.tr('label_success')} ($count)' : LocalizationService.tr('label_stats_null'),
                                                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.blue.shade900),
                                                 ),
                                                 if (count > 0)
                                                   TextButton(
                                                     onPressed: () => _showPredefinedReviews(context, _predefinedAdvice!['diseaseName'], LocalizationService.isTamil),
-                                                    child: Text(LocalizationService.isTamil ? 'விமர்சனங்கள்' : 'Reviews', style: const TextStyle(fontSize: 11)),
+                                                    child: Text(LocalizationService.tr('label_reviews'), style: const TextStyle(fontSize: 11)),
                                                   ),
                                               ],
                                             );
@@ -528,7 +534,7 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: _isPlacing || cart.items.isEmpty ? null : () => _placeOrder(context, cart),
+                        onPressed: _isPlacing || checkoutItems.isEmpty ? null : () => _placeOrder(context, cart),
                         style: ElevatedButton.styleFrom(
                            backgroundColor: AppColors.primary,
                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -688,16 +694,14 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
        final proceed = await showDialog<bool>(
          context: context,
          builder: (ctx) => AlertDialog(
-           title: Text(LocalizationService.isTamil ? 'கடை மூடப்பட்டுள்ளது' : 'Shop is Closed'),
-           content: Text(LocalizationService.isTamil 
-             ? 'கடை தற்போது மூடப்பட்டுள்ளது. உங்கள் ஆர்டர் நாளை டெலிவரி செய்யப்படலாம். தொடரலாமா?' 
-             : 'The shop is currently closed. Your order may be delivered tomorrow. Do you want to proceed?'),
+           title: Text(LocalizationService.tr('title_shop_closed')),
+           content: Text(LocalizationService.tr('msg_shop_closed_proceed')),
            actions: [
-             TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(LocalizationService.isTamil ? 'ரத்து' : 'Cancel')),
+             TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(LocalizationService.tr('btn_cancel'))),
              ElevatedButton(
                onPressed: () => Navigator.pop(ctx, true), 
                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-               child: Text(LocalizationService.isTamil ? 'தொடர்க' : 'Proceed', style: const TextStyle(color: Colors.white)),
+               child: Text(LocalizationService.tr('btn_continue'), style: const TextStyle(color: Colors.white)),
              ),
            ],
          )
@@ -710,7 +714,7 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
       if (_cropController.text.trim().isEmpty || _diseaseController.text.trim().isEmpty || _diseaseImage == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(LocalizationService.isTamil ? "தயவுசெய்து அனைத்து விவரங்களையும் படத்தையும் வழங்கவும்" : "Please provide all details and photo"),
+            content: Text(LocalizationService.tr('error_dosage_details_required')),
             backgroundColor: Colors.red,
           ),
         );
@@ -731,18 +735,27 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
       // --- Aadhar Verification Pre-Flight Check ---
       bool needsAadhar = false;
       double requestedLiters = 0.0;
-      for (final item in cart.items) {
+      final checkoutItems = widget.directItem != null ? [widget.directItem!] : cart.items;
+      final totalAmount = widget.directItem != null 
+          ? widget.directItem!.price * widget.directItem!.quantity 
+          : cart.totalAmount;
+
+      for (final item in checkoutItems) {
         final productDoc = await FirebaseFirestore.instance.collection('products').doc(item.productId).get();
         if (productDoc.exists && productDoc.data()?['categoryId'] == 'pesticides') {
           needsAadhar = true;
           
-          double volume = 1.0; // fallback 1 L default
+          double volume = 1.0; // fallback 1 L/kg default
           final unit = item.unitEn.toLowerCase();
-          final mlMatch = RegExp(r'(\d+)\s*ml').firstMatch(unit);
-          final lMatch = RegExp(r'(\d+(\.\d+)?)\s*l(iter)?s?').firstMatch(unit);
+          
+          final mlMatch = RegExp(r'(\d+)\s*(ml|grams|g\b)').firstMatch(unit);
+          final lMatch = RegExp(r'(\d+(\.\d+)?)\s*(l(iter)?s?|kg|kilograms?)').firstMatch(unit);
+          
           if (mlMatch != null) {
+            // Convert grams/ml to Kg/L
             volume = double.parse(mlMatch.group(1)!) / 1000.0;
           } else if (lMatch != null) {
+            // Use directly as Kg/L
             volume = double.parse(lMatch.group(1)!);
           } else {
              // If numeric weight is isolated
@@ -775,7 +788,6 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
       }
       // ---------------------------------------------
 
-      final total = cart.totalAmount;
       final orderId = FirebaseFirestore.instance.collection('orders').doc().id;
       final orderRef = FirebaseFirestore.instance.collection('orders').doc(orderId);
 
@@ -788,7 +800,7 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
       // [STOCK MANAGEMENT] Use a transaction to safely check and reduce stock
       await FirebaseFirestore.instance.runTransaction((transaction) async {
          // 1. Read all product docs to check stock
-         for (final item in cart.items) {
+         for (final item in checkoutItems) {
             final productRef = FirebaseFirestore.instance.collection('products').doc(item.productId);
             final productDoc = await transaction.get(productRef);
             
@@ -803,7 +815,7 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
          }
 
          // 2. Reduce Stock
-         for (final item in cart.items) {
+         for (final item in checkoutItems) {
             final productRef = FirebaseFirestore.instance.collection('products').doc(item.productId);
             transaction.update(productRef, {
                'stock': FieldValue.increment(-item.quantity),
@@ -817,7 +829,7 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
             'shopId': 'default_shop',
             'status': 'reserved',
             'paymentMethod': _paymentMethod,
-            'totalAmount': total,
+            'totalAmount': totalAmount,
             'customerVillage': userVillage,
             'createdAt': FieldValue.serverTimestamp(),
             'needsDosageAdvice': _needsDosageAdvice && _predefinedAdvice == null,
@@ -828,7 +840,7 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
             'dosageAdvice': _predefinedAdvice?['advice'],
             'recommendedProducts': _predefinedAdvice?['products'],
             'dosageAdviceStatus': _predefinedAdvice != null ? 'provided' : 'requested',
-            'items': cart.items.map((item) => {
+            'items': checkoutItems.map((item) => {
                'productId': item.productId,
                'name_ta': item.nameTa,
                'name_en': item.nameEn,
@@ -850,7 +862,9 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
          }
       });
 
-      cart.clear();
+      if (widget.directItem == null) {
+        cart.clear();
+      }
 
       // --- Notify Owner ---
       try {
@@ -871,7 +885,8 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
         MaterialPageRoute(
           builder: (_) => FarmerOrderSuccessScreen(
             orderId: orderRef.id,
-            totalAmount: total,
+            totalAmount: totalAmount,
+            needsDosageAdvice: _needsDosageAdvice && _predefinedAdvice == null,
           ),
         ),
       );
@@ -933,7 +948,7 @@ class _FarmerCheckoutScreenState extends State<FarmerCheckoutScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isTa ? 'விவசாயிகளின் கருத்துக்கள்' : 'Farmer Feedback',
+              LocalizationService.tr('label_farmer_feedback'),
               style: GoogleFonts.notoSansTamil(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),

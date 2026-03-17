@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'core/theme/theme.dart';
 import 'core/services/localization_service.dart';
@@ -20,16 +22,25 @@ import 'features/owner/settings/owner_settings_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // Temporarily disabled for debugging Phone Auth internet error
+  /*
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+  );
+  */
+
   await LocalizationService.init();
   await NotificationService.init();
-  
+
   // Seeders moved to AuthProvider to ensure authorized access
-  
+
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+  static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+      GlobalKey<ScaffoldMessengerState>();
   const MyApp({super.key});
 
   @override
@@ -71,4 +82,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-

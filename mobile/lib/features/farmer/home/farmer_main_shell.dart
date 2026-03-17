@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/services/localization_service.dart';
 import 'farmer_home_screen.dart';
 import '../products/farmer_categories_screen.dart';
-import '../advisory/farmer_ai_plant_doctor_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../profile/farmer_profile_screen.dart';
 import '../profile/farmer_profile_setup_screen.dart';
-import '../../../core/services/debug_notification_service.dart';
 import 'package:provider/provider.dart';
+import '../../../core/constants/colors.dart';
 import '../../auth/providers/auth_provider.dart' as app_auth;
 
 class FarmerMainShell extends StatefulWidget {
@@ -29,14 +29,12 @@ class _FarmerMainShellState extends State<FarmerMainShell> {
     _pages = const [
       FarmerHomeScreen(),
       FarmerCategoriesScreen(),
-      // FarmerAiPlantDoctorScreen(),
       FarmerProfileScreen(),
     ];
   }
 
   @override
   Widget build(BuildContext context) {
-    // Ensure a user is logged in; if not, send them back to login.
     final user = FirebaseAuth.instance.currentUser;
     final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
 
@@ -53,55 +51,45 @@ class _FarmerMainShellState extends State<FarmerMainShell> {
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-           return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        if (snapshot.hasError) {
+          return Scaffold(
+            body: Center(child: Text("Connection Error: ${snapshot.error}")),
+          );
+        }
+
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
         }
         
         final userData = snapshot.data!.data() as Map<String, dynamic>?;
         final isBasicComplete = userData?['isProfileBasicComplete'] == true;
-        // Also consider legacy users who might have a name but no flag. 
-        // Simple check: if name is present, assume basic is done.
-        final hasName = userData?['name'] != null && (userData!['name'] as String).isNotEmpty;
-
-        if (!isBasicComplete && !hasName) {
-           return const FarmerProfileSetupScreen(mode: ProfileSetupMode.basic);
+        
+        if (!isBasicComplete && userData?['name'] == null) {
+          return const FarmerProfileSetupScreen(mode: ProfileSetupMode.basic);
         }
 
         return Scaffold(
           body: _pages[_currentIndex],
-          bottomNavigationBar: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            type: BottomNavigationBarType.fixed,
-            items: [
-              BottomNavigationBarItem(
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _currentIndex,
+            onDestinationSelected: (index) => setState(() => _currentIndex = index),
+            destinations: [
+              NavigationDestination(
                 icon: const Icon(Icons.home_outlined),
+                selectedIcon: const Icon(Icons.home_rounded),
                 label: LocalizationService.tr('nav_home'),
               ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.storefront_outlined),
+              NavigationDestination(
+                icon: const Icon(Icons.shopping_bag_outlined),
+                selectedIcon: const Icon(Icons.shopping_bag_rounded),
                 label: LocalizationService.tr('nav_shops'),
               ),
-              // BottomNavigationBarItem(
-              //   icon: const Icon(Icons.insights_outlined),
-              //   label: LocalizationService.tr('nav_advisory'),
-              // ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.person_outline),
+              NavigationDestination(
+                icon: const Icon(Icons.person_outline_rounded),
+                selectedIcon: const Icon(Icons.person_rounded),
                 label: LocalizationService.tr('nav_profile'),
               ),
             ],
-          ),
-          floatingActionButton: FloatingActionButton(
-            mini: true,
-            backgroundColor: Colors.red.withOpacity(0.1),
-            elevation: 0,
-            onPressed: () => DebugNotificationService.sendTestNotification(),
-            child: const Icon(Icons.bug_report, color: Colors.red),
           ),
         );
       }

@@ -83,6 +83,15 @@ class FarmerOrderTrackingScreen extends StatelessWidget {
               subtitleEn: LocalizationService.tr('status_picked_subtitle'),
               timestamp: pickedAt?.toDate(),
             ),
+            if (status == 'cancelled')
+              _StepInfo(
+                key: 'cancelled',
+                titleTa: LocalizationService.tr('status_cancelled_label'),
+                titleEn: LocalizationService.tr('status_cancelled_label'),
+                subtitleTa: LocalizationService.tr('status_cancelled_subtitle'),
+                subtitleEn: LocalizationService.tr('status_cancelled_subtitle'),
+                timestamp: (data['cancelledAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+              ),
           ];
 
           int currentIndex = steps.indexWhere((s) => s.key == status);
@@ -113,7 +122,7 @@ class FarmerOrderTrackingScreen extends StatelessWidget {
                         style: GoogleFonts.notoSansTamil(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.primaryDark,
+                          color: AppColors.primary,
                         ),
                       ),
                       const SizedBox(height: 4),

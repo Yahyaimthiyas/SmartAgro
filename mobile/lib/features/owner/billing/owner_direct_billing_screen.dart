@@ -210,8 +210,9 @@ class _OwnerDirectBillingScreenState extends State<OwnerDirectBillingScreen> {
         'status': 'picked',
         'paymentMethod': 'cash',
         'type': 'direct_sale',
+        'isOnline': false,
         'createdAt': FieldValue.serverTimestamp(),
-        'farmerId': _foundFarmerId, // [NEW]
+        'farmerId': _foundFarmerId,
       };
 
       batch.set(orderRef, orderData);
@@ -421,194 +422,124 @@ class _OwnerDirectBillingScreenState extends State<OwnerDirectBillingScreen> {
   @override
   Widget build(BuildContext context) {
     final isTa = LocalizationService.isTamil;
-    // ... truncated
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          isTa ? 'நேரடி விற்பனை' : 'Direct Billing',
-          style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold),
+          isTa ? 'நேரடி விற்பனை' : 'Smart POS Billing',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
         actions: [
           IconButton(
-            icon: const Icon(Icons.qr_code_scanner),
+            icon: const Icon(Icons.qr_code_scanner_rounded),
             onPressed: () => _scanQRCode(),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Column(
         children: [
-          // Customer Details
           Container(
-            color: Colors.white,
-            padding: const EdgeInsets.all(16),
+            color: AppColors.surface,
+            padding: const EdgeInsets.all(20),
             child: Column(
               children: [
                 Row(
                   children: [
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          TextField(
-                            controller: _customerNameController,
-                            decoration: InputDecoration(
-                              hintText: isTa ? 'பெயர்' : 'Customer Name',
-                              prefixIcon: const Icon(Icons.person_outline),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: _customerPhoneController,
-                            keyboardType: TextInputType.phone,
-                            maxLength: 10,
-                            onChanged: (v) {
-                              if (v.length == 10) _lookupFarmer();
-                            },
-                            decoration: InputDecoration(
-                              hintText: isTa ? 'மொபைல்' : 'Phone Number',
-                              prefixIcon: const Icon(Icons.phone_outlined),
-                              suffixIcon: IconButton(
-                                icon: const Icon(
-                                  Icons.search,
-                                  color: AppColors.primary,
-                                ),
-                                onPressed: _lookupFarmer,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              counterText: "",
-                            ),
-                          ),
-                          if (_foundFarmerId != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4, bottom: 8),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.stars,
-                                    color: Colors.orange,
-                                    size: 16,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${isTa ? "லாயல்டி புள்ளிகள்" : "Loyalty Points"}: $_farmerPoints',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.orange,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: _customerVillageController,
-                            decoration: InputDecoration(
-                              hintText: isTa ? 'கிராமம்' : 'Village (Optional)',
-                              prefixIcon: const Icon(
-                                Icons.location_on_outlined,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: _adviceController,
-                            decoration: InputDecoration(
-                              hintText: isTa ? 'இலவச ஆலோசனை (விரும்பினால்)' : 'Free Advice Note (Optional)',
-                              prefixIcon: const Icon(Icons.tips_and_updates_outlined),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: _customerEmailController,
-                            decoration: InputDecoration(
-                              hintText: isTa
-                                  ? 'மின்னஞ்சல்'
-                                  : 'Email (Optional)',
-                              prefixIcon: const Icon(Icons.email_outlined),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                            ),
-                          ),
-                        ],
+                      child: _buildPOSField(
+                        controller: _customerPhoneController,
+                        label: isTa ? 'கைபேசி எண்' : 'Phone',
+                        icon: Icons.phone_android_rounded,
+                        keyboardType: TextInputType.phone,
+                        maxLength: 10,
+                        onChanged: (v) {
+                          if (v.length == 10) _lookupFarmer();
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildPOSField(
+                        controller: _customerNameController,
+                        label: isTa ? 'பெயர்' : 'Name',
+                        icon: Icons.person_rounded,
                       ),
                     ),
                   ],
                 ),
+                if (_foundFarmerId != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.orange.withOpacity(0.2)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.stars_rounded, color: Colors.orange, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${isTa ? "புள்ளிகள்" : "Points"}: $_farmerPoints',
+                            style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.orange.shade800),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: _searchController,
-                  onChanged: (v) =>
-                      setState(() => _searchQuery = v.toLowerCase()),
-                  decoration: InputDecoration(
-                    hintText: isTa
-                        ? 'பெயர் மூலம் தேடுங்கள்...'
-                        : 'Search by Products...',
-                    prefixIcon: const Icon(Icons.search),
-                    filled: true,
-                    fillColor: Colors.grey.shade100,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildPOSField(
+                        controller: _customerVillageController,
+                        label: isTa ? 'ஊர்' : 'Village',
+                        icon: Icons.location_on_rounded,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildPOSField(
+                        controller: _adviceController,
+                        label: isTa ? 'குறிப்பு' : 'Note',
+                        icon: Icons.info_outline_rounded,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
+                    style: GoogleFonts.inter(fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: isTa ? 'தேடுங்கள்...' : 'Search Products...',
+                      prefixIcon: const Icon(Icons.search_rounded),
+                      filled: true,
+                      fillColor: AppColors.surface,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: AppColors.borderLight)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: AppColors.borderLight)),
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                // --- CROP KITS (NEW) ---
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _KitChip(
-                        label: isTa ? 'நெற்பயிர் கிட்' : 'Paddy Kit',
-                        icon: Icons.grass,
-                        onTap: () => _addPaddyKit(),
-                      ),
-                      const SizedBox(width: 8),
-                      _KitChip(
-                        label: isTa ? 'தக்காளி கிட்' : 'Tomato Kit',
-                        icon: Icons.eco,
-                        onTap: () => _addTomatoKit(),
-                      ),
-                      const SizedBox(width: 8),
-                      _KitChip(
-                        label: isTa ? 'உரம் கிட்' : 'Fertilizer Set',
-                        icon: Icons.opacity,
-                        onTap: () => _addFertilizerKit(),
-                      ),
-                    ],
-                  ),
-                ),
+                const SizedBox(width: 12),
+                _KitChip(label: isTa ? 'நெல்' : 'Paddy', icon: Icons.grass, onTap: _addPaddyKit),
+                const SizedBox(width: 4),
+                _KitChip(label: isTa ? 'தக்காளி' : 'Tomato', icon: Icons.eco_rounded, onTap: _addTomatoKit),
+                const SizedBox(width: 4),
+                _KitChip(label: isTa ? 'உரம்' : 'Urea', icon: Icons.eco, onTap: _addFertilizerKit),
               ],
             ),
           ),
@@ -619,213 +550,268 @@ class _OwnerDirectBillingScreenState extends State<OwnerDirectBillingScreen> {
                 // Product Selection
                 Expanded(
                   flex: 3,
-                  child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                    stream: FirebaseFirestore.instance
-                        .collection('products')
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      final all = snapshot.data?.docs ?? [];
-                      final filtered = all.where((d) {
-                        final data = d.data();
-                        final nTa = (data['name_ta'] as String? ?? '')
-                            .toLowerCase();
-                        final nEn = (data['name_en'] as String? ?? '')
-                            .toLowerCase();
-                        return nTa.contains(_searchQuery) ||
-                            nEn.contains(_searchQuery);
-                      }).toList();
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                      stream: FirebaseFirestore.instance.collection('products').snapshots(),
+                      builder: (context, snapshot) {
+                        final all = snapshot.data?.docs ?? [];
+                        final filtered = all.where((d) {
+                          final data = d.data();
+                          final nTa = (data['name_ta'] as String? ?? '').toLowerCase();
+                          final nEn = (data['name_en'] as String? ?? '').toLowerCase();
+                          return nTa.contains(_searchQuery) || nEn.contains(_searchQuery);
+                        }).toList();
 
-                      return ListView.builder(
-                        padding: const EdgeInsets.all(8),
-                        itemCount: filtered.length,
-                        itemBuilder: (context, index) {
-                          final doc = filtered[index];
-                          final data = doc.data();
-                          final name = isTa
-                              ? (data['name_ta'] ?? data['name_en'])
-                              : (data['name_en'] ?? data['name_ta']);
-                          final originalPrice = (data['price'] as num? ?? 0)
-                              .toDouble();
-                          final finalPrice = PriceUtils.calculateFinalPrice(
-                            data,
-                          );
-                          final hasOffer = PriceUtils.isOfferActuallyActive(
-                            data,
-                          );
-                          final stock = data['stock'] as int? ?? 0;
-
-                          return Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: ListTile(
-                              title: Text(
-                                name,
-                                style: GoogleFonts.notoSansTamil(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (hasOffer) ...[
-                                    Text(
-                                      '₹$originalPrice',
-                                      style: const TextStyle(
-                                        decoration: TextDecoration.lineThrough,
-                                        color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    Text(
-                                      '₹$finalPrice',
-                                      style: const TextStyle(
-                                        color: Colors.red,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ] else
-                                    Text('₹$originalPrice'),
-                                  Text(
-                                    '${isTa ? "இருப்பு" : "Stock"}: $stock',
-                                    style: const TextStyle(fontSize: 11),
-                                  ),
-                                ],
-                              ),
-                              trailing: IconButton(
-                                icon: const Icon(
-                                  Icons.add_circle,
-                                  color: AppColors.primary,
-                                ),
-                                onPressed: stock > 0
-                                    ? () => _addToCart(doc.id, data)
-                                    : null,
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    },
+                        return GridView.builder(
+                          padding: const EdgeInsets.all(12),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.8,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) => _POSProductCard(
+                            doc: filtered[index],
+                            onAdd: () => _addToCart(filtered[index].id, filtered[index].data()),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
 
-                // Cart Summary
-                Container(width: 1, color: Colors.grey.shade300),
+                // Cart
                 Expanded(
                   flex: 2,
                   child: Container(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     child: Column(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            isTa ? 'கூடை' : 'Cart',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.borderLight))),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.shopping_cart_outlined, size: 20),
+                              const SizedBox(width: 8),
+                              Text(isTa ? 'கூடை' : 'Cart', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+                              const Spacer(),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(12)),
+                                child: Text('${_cart.length}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                              ),
+                            ],
                           ),
                         ),
                         Expanded(
                           child: ListView(
                             children: [
-                              if (_cart.isNotEmpty)
-                                const _PairRecommendationRow(), // [NEW]
-                              ..._cart.entries.map((e) {
-                                final name = isTa
-                                    ? (e.value['data']['name_ta'] ??
-                                          e.value['data']['name_en'])
-                                    : (e.value['data']['name_en'] ??
-                                          e.value['data']['name_ta']);
-                                return ListTile(
-                                  dense: true,
-                                  title: Text(
-                                    name,
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                  subtitle: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        '₹${e.value['finalPrice']} x ${e.value['quantity']}',
-                                      ),
-                                      Row(
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(
-                                              Icons.remove_circle_outline,
-                                              size: 18,
-                                            ),
-                                            onPressed: () =>
-                                                _updateQuantity(e.key, -1),
-                                          ),
-                                          Text('${e.value['quantity']}'),
-                                          IconButton(
-                                            icon: const Icon(
-                                              Icons.add_circle_outline,
-                                              size: 18,
-                                            ),
-                                            onPressed: () =>
-                                                _updateQuantity(e.key, 1),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
+                              if (_cart.isNotEmpty) const _PairRecommendationRow(),
+                              ..._cart.entries.map((e) => _CartListItem(
+                                item: e.value,
+                                onAdd: () => _updateQuantity(e.key, 1),
+                                onRemove: () => _updateQuantity(e.key, -1),
+                              )).toList(),
                             ],
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          color: Colors.grey.shade50,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Text(
-                                '${isTa ? "மொத்தம்" : "Total"}: ₹${_totalAmount.toStringAsFixed(0)}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                                textAlign: TextAlign.right,
-                              ),
-                              const SizedBox(height: 12),
-                              ElevatedButton(
-                                onPressed: _cart.isEmpty || _isProcessing
-                                    ? null
-                                    : _processCheckout,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                ),
-                                child: _isProcessing
-                                    ? const SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : Text(
-                                        isTa
-                                            ? 'பணம் பெற்றுக்கொள்'
-                                            : 'Pay & Bill',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        _buildPaymentFooter(isTa),
                       ],
                     ),
                   ),
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentFooter(bool isTa) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: AppColors.borderLight)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(isTa ? "மொத்தம்" : "Total Amount", style: GoogleFonts.inter(color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+              Text('₹${_totalAmount.toStringAsFixed(0)}', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primary)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _cart.isEmpty || _isProcessing ? null : _processCheckout,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
+              ),
+              child: _isProcessing
+                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : Text(isTa ? 'ஆர்டர் செய்' : 'Checkout & Bill', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  Widget _buildPOSField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType? keyboardType,
+    int? maxLength,
+    ValueChanged<String>? onChanged,
+    Widget? suffixIcon,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      maxLength: maxLength,
+      onChanged: onChanged,
+      style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: GoogleFonts.outfit(fontSize: 13, color: AppColors.textSecondary),
+        prefixIcon: Icon(icon, size: 20, color: AppColors.primary.withOpacity(0.5)),
+        suffixIcon: suffixIcon,
+        counterText: "",
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.borderLight)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.borderLight)),
+        focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: AppColors.primary, width: 1.5)),
+        filled: true,
+        fillColor: AppColors.background.withOpacity(0.3),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+    );
+  }
+}
+
+class _POSProductCard extends StatelessWidget {
+  final QueryDocumentSnapshot<Map<String, dynamic>> doc;
+  final VoidCallback onAdd;
+
+  const _POSProductCard({required this.doc, required this.onAdd});
+
+  @override
+  Widget build(BuildContext context) {
+    final data = doc.data();
+    final name = LocalizationService.pickTaEn(data['name_ta'], data['name_en']);
+    final price = PriceUtils.calculateFinalPrice(data);
+    final stock = data['stock'] as int? ?? 0;
+    final imageUrl = data['imageUrl'] as String?;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: imageUrl != null && imageUrl.isNotEmpty
+                      ? Image.network(imageUrl, fit: BoxFit.cover, width: double.infinity)
+                      : Container(color: AppColors.background, child: const Icon(Icons.inventory_2_outlined, color: Colors.grey)),
+                ),
+                if (stock <= 5)
+                  Positioned(
+                    top: 8, right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(color: Colors.red.withOpacity(0.9), borderRadius: BorderRadius.circular(8)),
+                      child: Text('LOW', style: GoogleFonts.inter(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white)),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13)),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('₹$price', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppColors.primary, fontSize: 13)),
+                    InkWell(
+                      onTap: stock > 0 ? onAdd : null,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(color: stock > 0 ? AppColors.primary : Colors.grey.shade300, borderRadius: BorderRadius.circular(8)),
+                        child: const Icon(Icons.add_rounded, size: 18, color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CartListItem extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final VoidCallback onAdd;
+  final VoidCallback onRemove;
+
+  const _CartListItem({required this.item, required this.onAdd, required this.onRemove});
+
+  @override
+  Widget build(BuildContext context) {
+    final name = LocalizationService.isTamil ? (item['data']['name_ta'] ?? item['data']['name_en']) : item['data']['name_en'];
+    final price = item['finalPrice'] as double;
+    final qty = item['quantity'] as int;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.borderLight))),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(name, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('₹$price', style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary)),
+              Row(
+                children: [
+                  IconButton(icon: const Icon(Icons.remove_rounded, size: 16), onPressed: onRemove, padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+                  const SizedBox(width: 8),
+                  Text('$qty', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 8),
+                  IconButton(icon: const Icon(Icons.add_rounded, size: 16), onPressed: onAdd, padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+                ],
+              ),
+            ],
           ),
         ],
       ),
@@ -838,23 +824,17 @@ class _KitChip extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _KitChip({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
+  const _KitChip({required this.label, required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return ActionChip(
       avatar: Icon(icon, size: 16, color: AppColors.primary),
-      label: Text(
-        label,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-      ),
+      label: Text(label, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold)),
       onPressed: onTap,
-      backgroundColor: Colors.white,
-      side: BorderSide(color: AppColors.primary.withOpacity(0.2)),
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      side: BorderSide(color: AppColors.borderLight),
     );
   }
 }
@@ -866,41 +846,35 @@ class _PairRecommendationRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final isTa = LocalizationService.isTamil;
     return Container(
-      margin: const EdgeInsets.all(8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue.shade100),
+        color: AppColors.primaryLight.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primaryLight),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.lightbulb_outline, size: 16, color: Colors.blue),
-              const SizedBox(width: 4),
+              const Icon(Icons.auto_awesome_rounded, size: 18, color: AppColors.primary),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   isTa ? 'அடிக்கடி வாங்கியவை' : 'Often bought together',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue,
-                  ),
+                  style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primary),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
                 _SmallRecChip(label: isTa ? 'யூரியா' : 'Urea'),
-                const SizedBox(width: 4),
+                const SizedBox(width: 6),
                 _SmallRecChip(label: isTa ? 'பூஞ்சைக் கொல்லி' : 'Fungicide'),
               ],
             ),
@@ -918,19 +892,15 @@ class _SmallRecChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.blue.shade200),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.primaryLight),
       ),
       child: Text(
         label,
-        style: const TextStyle(
-          fontSize: 10,
-          color: Colors.blue,
-          fontWeight: FontWeight.w600,
-        ),
+        style: GoogleFonts.inter(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.bold),
       ),
     );
   }

@@ -35,7 +35,6 @@ class VoiceSearchService {
         }
       },
       localeId: 'en_IN', // Default, can swap to 'ta_IN' if supported
-      cancelOnError: true,
     );
   }
 

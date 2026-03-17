@@ -16,6 +16,7 @@ class OtpVerifyScreen extends StatefulWidget {
 }
 
 class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
+  bool _isLoading = false;
   final TextEditingController _otpController = TextEditingController();
   Timer? _timer;
   int _remainingSeconds = 120; // 2 minutes
@@ -57,23 +58,37 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
   }
 
   void _verify() async {
-    if (_otpController.text.length == 6) {
+    if (_otpController.text.length == 6 && !_isLoading) {
+      setState(() => _isLoading = true);
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      final success = await auth.verifyOtp(_otpController.text);
-      
-      if (!mounted) return;
-      
-      if (success) {
-        final role = await auth.getUserRole();
+      try {
+        final success = await auth.verifyOtp(_otpController.text);
+        
         if (!mounted) return;
-        if (role == 'owner') {
-          Navigator.pushNamedAndRemoveUntil(context, '/owner-secure', (route) => false);
+        
+        if (success) {
+          final role = await auth.getUserRole();
+          if (!mounted) return;
+          if (role == 'owner') {
+            Navigator.pushNamedAndRemoveUntil(context, '/owner-secure', (route) => false);
+          } else {
+            Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+          }
         } else {
-          Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(content: Text(LocalizationService.isTamil ? "தவறான OTP" : "Invalid OTP")),
+          );
         }
-      } else {
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Invalid OTP")),
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     }
@@ -163,21 +178,30 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _verify,
+                  onPressed: _isLoading ? null : _verify,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  child: Text(
-                    'Verify OTP',
-                    style: GoogleFonts.notoSansTamil(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          LocalizationService.isTamil ? 'சரிபார்' : 'Verify OTP',
+                          style: GoogleFonts.notoSansTamil(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
 

@@ -47,9 +47,12 @@ class OwnerInvoiceScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(
-          isTa ? 'ஆர்டர் ரசீது' : 'Invoice',
-          style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold),
+          isTa ? 'ஆர்டர் ரசீது' : 'Digital Invoice',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black),
         ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined),
@@ -61,197 +64,267 @@ class OwnerInvoiceScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Column(
-                children: [
-                  const Icon(Icons.agriculture, size: 48, color: AppColors.primary),
-                  const SizedBox(height: 8),
-                  Text(
-                    'SMART AGRO SHOP',
-                    style: GoogleFonts.poppins(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  Text(
-                    'Agro-Inputs & Services',
-                    style: GoogleFonts.poppins(fontSize: 12, color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
+      body: Stack(
+        children: [
+          // Background Trademark / Watermark
+          Positioned(
+            right: -50,
+            bottom: 100,
+            child: Opacity(
+              opacity: 0.03,
+              child: Icon(Icons.verified_user_rounded, size: 300, color: AppColors.primary),
             ),
-            const SizedBox(height: 32),
-            const Divider(),
-            const SizedBox(height: 16),
-            
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          ),
+          SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Center(
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.agriculture_rounded, size: 40, color: AppColors.primary),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'SMART AGRO SHOP',
+                        style: GoogleFonts.outfit(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      Text(
+                        'Agro-Inputs & Strategic Services',
+                        style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 40),
+                
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      isTa ? 'இன்வாய்ஸ் எண்:' : 'Invoice No:',
-                      style: GoogleFonts.poppins(fontSize: 12, color: AppColors.textSecondary),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isTa ? 'இன்வாய்ஸ் எண்:' : 'Invoice No:',
+                          style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                        ),
+                        Text(
+                          '#$orderId'.toUpperCase(),
+                          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                      ],
                     ),
-                    Text(
-                      '#$orderId',
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          isTa ? 'தேதி:' : 'Transaction Date:',
+                          style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                        ),
+                        Text(
+                          formattedDate,
+                          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      isTa ? 'தேதி:' : 'Date:',
-                      style: GoogleFonts.poppins(fontSize: 12, color: AppColors.textSecondary),
-                    ),
-                    Text(
-                      formattedDate,
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-                    ),
-                  ],
+                const SizedBox(height: 24),
+                
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.borderLight),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isTa ? 'வாடிக்கையாளர் விவரம்:' : 'CUSTOMER DETAILS',
+                        style: GoogleFonts.outfit(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.w800, letterSpacing: 1),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        customerName,
+                        style: GoogleFonts.notoSansTamil(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      if (customerPhone.isNotEmpty)
+                        Text(
+                          customerPhone,
+                          style: GoogleFonts.inter(fontSize: 13, color: AppColors.textSecondary),
+                        ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            
-            Text(
-              isTa ? 'வாடிக்கையாளர் விவரம்:' : 'Customer Details:',
-              style: GoogleFonts.poppins(fontSize: 12, color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              customerName,
-              style: GoogleFonts.notoSansTamil(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            if (customerPhone.isNotEmpty)
-              Text(
-                customerPhone,
-                style: GoogleFonts.poppins(fontSize: 14),
-              ),
-            const SizedBox(height: 24),
-            
-            const Divider(),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                children: [
-                   Expanded(flex: 3, child: Text(isTa ? 'பொருள்' : 'Item', style: const TextStyle(fontWeight: FontWeight.bold))),
-                   Expanded(child: Text(isTa ? 'அளவு' : 'Qty', textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold))),
-                   Expanded(child: Text(isTa ? 'விலை' : 'Price', textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold))),
-                ],
-              ),
-            ),
-            const Divider(),
-            
-            for (final item in items) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Text(
-                        LocalizationService.pickTaEn(item['name_ta'], item['name_en']),
-                        style: GoogleFonts.notoSansTamil(fontSize: 14),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        '${item['quantity']}',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(),
-                      ),
-                    ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          if (item['originalPrice'] != null && (item['originalPrice'] as num).toDouble() > (item['price'] as num).toDouble())
-                            Text(
-                              '₹${(item['originalPrice'] * (item['quantity'] ?? 1)).toStringAsFixed(0)}',
-                              style: const TextStyle(decoration: TextDecoration.lineThrough, color: Colors.grey, fontSize: 10),
-                            ),
-                          Text(
-                            '₹${((item['price'] ?? 0) * (item['quantity'] ?? 1)).toStringAsFixed(0)}',
-                            textAlign: TextAlign.right,
-                            style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold),
+                const SizedBox(height: 32),
+                
+                Text(
+                  isTa ? 'தயாரிப்பு விவரங்கள்' : 'ORDER SUMMARY',
+                  style: GoogleFonts.outfit(fontSize: 11, color: AppColors.textPrimary, fontWeight: FontWeight.w800, letterSpacing: 1),
+                ),
+                const SizedBox(height: 8),
+                const Divider(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                       Expanded(flex: 3, child: Text(isTa ? 'பொருள்' : 'ITEM', style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 11, color: AppColors.textSecondary))),
+                       Expanded(child: Text(isTa ? 'அளவு' : 'QTY', textAlign: TextAlign.center, style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 11, color: AppColors.textSecondary))),
+                       Expanded(child: Text(isTa ? 'விலை' : 'PRICE', textAlign: TextAlign.right, style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 11, color: AppColors.textSecondary))),
+                    ],
+                  ),
+                ),
+                const Divider(),
+                
+                for (final item in items) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            LocalizationService.pickTaEn(item['name_ta'], item['name_en']),
+                            style: GoogleFonts.notoSansTamil(fontSize: 14, fontWeight: FontWeight.w500),
                           ),
-                        ],
-                      ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            '${item['quantity']}',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              if (item['originalPrice'] != null && (item['originalPrice'] as num).toDouble() > (item['price'] as num).toDouble())
+                                Text(
+                                  '₹${(item['originalPrice'] * (item['quantity'] ?? 1)).toStringAsFixed(0)}',
+                                  style: GoogleFonts.inter(decoration: TextDecoration.lineThrough, color: Colors.grey, fontSize: 10),
+                                ),
+                              Text(
+                                '₹${((item['price'] ?? 0) * (item['quantity'] ?? 1)).toStringAsFixed(0)}',
+                                textAlign: TextAlign.right,
+                                style: GoogleFonts.inter(fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            ],
-            
-            const SizedBox(height: 32),
-            const Divider(thickness: 2),
-            
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  isTa ? 'மொத்தம்' : 'GRAND TOTAL',
-                  style: GoogleFonts.notoSansTamil(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                  ),
+                ],
+                
+                const SizedBox(height: 32),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8)),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        isTa ? 'மொத்தம்' : 'TOTAL PAYABLE',
+                        style: GoogleFonts.outfit(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white70,
+                        ),
+                      ),
+                      Text(
+                        '₹${total.toStringAsFixed(0)}',
+                        style: GoogleFonts.outfit(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Text(
-                  '₹${total.toStringAsFixed(0)}',
-                  style: GoogleFonts.notoSansTamil(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryDark,
+                const SizedBox(height: 60),
+                
+                Center(
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Text(
+                          isTa ? 'நன்றி! மீண்டும் வருக!' : 'QUALITY PRODUCTS • TRUSTED SERVICE',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        isTa ? 'கணினி மூலம் உருவாக்கப்பட்ட விலைப்பட்டியல்' : 'System Generated Digital Receipt',
+                        style: GoogleFonts.inter(fontSize: 10, color: Colors.grey),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 48),
-            
-            Center(
-              child: Column(
-                children: [
-                  Text(
-                    isTa ? 'நன்றி! மீண்டும் வருக!' : 'Thank you! Visit again!',
-                    style: GoogleFonts.notoSansTamil(
-                      fontStyle: FontStyle.italic,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(isTa ? 'கணினி மூலம் உருவாக்கப்பட்ட விலைப்பட்டியல்' : 'Computer Generated Invoice'),
-                ],
-              ),
-            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5)),
           ],
         ),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: ElevatedButton.icon(
-             onPressed: () => _shareBillMenu(context, customerPhone, customerEmail),
-             icon: const Icon(Icons.send, color: Colors.white),
-             label: Text(
-               isTa ? 'பில் அனுப்பவும்' : 'Send Bill to Customer',
-               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-             ),
-             style: ElevatedButton.styleFrom(
-               padding: const EdgeInsets.symmetric(vertical: 16),
-               backgroundColor: AppColors.primary,
-               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-             ),
-          ),
+        child: ElevatedButton(
+           onPressed: () => _shareBillMenu(context, customerPhone, customerEmail),
+           style: ElevatedButton.styleFrom(
+             padding: const EdgeInsets.symmetric(vertical: 16),
+             backgroundColor: AppColors.primary,
+             foregroundColor: Colors.white,
+             elevation: 0,
+             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+           ),
+           child: Row(
+             mainAxisAlignment: MainAxisAlignment.center,
+             children: [
+               const Icon(Icons.send_rounded, size: 20),
+               const SizedBox(width: 12),
+               Text(
+                 isTa ? 'பில் அனுப்பவும்' : 'Send Digital Receipt',
+                 style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold),
+               ),
+             ],
+           ),
         ),
       ),
     );

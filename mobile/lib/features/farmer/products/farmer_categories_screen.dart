@@ -43,7 +43,7 @@ class _FarmerCategoriesScreenState extends State<FarmerCategoriesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7F6), // Slightly cooler grey for modern feel
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -56,8 +56,8 @@ class _FarmerCategoriesScreenState extends State<FarmerCategoriesScreen> {
                   _searchQuery.isEmpty 
                       ? LocalizationService.tr('title_categories')
                       : (LocalizationService.isTamil ? 'தேடல் முடிவுகள்' : 'Search Results'),
-                  style: GoogleFonts.notoSansTamil(
-                    fontSize: 20,
+                  style: GoogleFonts.outfit(
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
                   ),
@@ -69,7 +69,7 @@ class _FarmerCategoriesScreenState extends State<FarmerCategoriesScreen> {
               const SliverToBoxAdapter(child: SizedBox(height: 32)),
               _buildHorizontalCategoryLists(),
             ],
-            const SliverToBoxAdapter(child: SizedBox(height: 40)),
+            const SliverToBoxAdapter(child: SizedBox(height: 48)),
           ],
         ),
       ),
@@ -78,73 +78,33 @@ class _FarmerCategoriesScreenState extends State<FarmerCategoriesScreen> {
 
   Widget _buildAppBar() {
     return SliverAppBar(
-      backgroundColor: const Color(0xFFF4F7F6),
+      backgroundColor: AppColors.background,
+      surfaceTintColor: AppColors.background,
       elevation: 0,
       pinned: true,
       floating: true,
-      expandedHeight: 160, // Taller header to fix overflow
+      expandedHeight: 140,
       leading: widget.showBack
           ? IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.textPrimary),
+              icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
               onPressed: () => Navigator.of(context).pop(),
             )
           : null,
       actions: [
         IconButton(
           icon: const Icon(Icons.shopping_cart_outlined, color: AppColors.textPrimary),
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const FarmerCartScreen()),
-          ),
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FarmerCartScreen())),
         ),
         const SizedBox(width: 8),
       ],
       flexibleSpace: FlexibleSpaceBar(
         background: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (!widget.showBack)
-                Text(
-                  LocalizationService.tr('home_products'), // "Products" or "Marketplace"
-                  style: GoogleFonts.notoSansTamil(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              if (!widget.showBack) const SizedBox(height: 16),
-              Container(
-                height: 50,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: LocalizationService.isTamil ? 'விதை, உரம் தேடுக...' : 'Search seeds, fertilizers...',
-                    hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 14),
-                    prefixIcon: const Icon(Icons.search, color: AppColors.primary),
-                    suffixIcon: _searchQuery.isNotEmpty 
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 20),
-                            onPressed: () => _searchController.clear(),
-                          )
-                        : null,
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ),
-              ),
+              _buildSearchBar(),
+              const SizedBox(height: 12),
             ],
           ),
         ),
@@ -152,28 +112,41 @@ class _FarmerCategoriesScreenState extends State<FarmerCategoriesScreen> {
     );
   }
 
-
+  Widget _buildSearchBar() {
+    return Container(
+      height: 52,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: LocalizationService.isTamil ? 'அனைத்தையும் தேடுங்கள்...' : 'Search everything...',
+          hintStyle: GoogleFonts.inter(color: AppColors.textPlaceholder, fontSize: 14),
+          prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary, size: 20),
+          suffixIcon: _searchQuery.isNotEmpty 
+              ? IconButton(icon: const Icon(Icons.close_rounded, size: 18), onPressed: () => _searchController.clear())
+              : null,
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+      ),
+    );
+  }
 
   Widget _buildCategoryGrid() {
-    // ... categories stream builder ...
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('categories')
-          .orderBy('sortOrder', descending: false)
-          .snapshots(),
+      stream: FirebaseFirestore.instance.collection('categories').orderBy('sortOrder').snapshots(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator()));
-        }
-
         final docs = snapshot.data?.docs ?? [];
-        if (docs.isEmpty) {
-          return SliverToBoxAdapter(
-            child: Center(
-              child: Text(LocalizationService.tr('msg_categories_coming_soon')),
-            ),
-          );
-        }
+        if (docs.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
 
         return SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -182,31 +155,16 @@ class _FarmerCategoriesScreenState extends State<FarmerCategoriesScreen> {
               crossAxisCount: 2,
               mainAxisSpacing: 16,
               crossAxisSpacing: 16,
-              childAspectRatio: 0.9, 
+              childAspectRatio: 1.2, 
             ),
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 final data = docs[index].data();
-                final id = docs[index].id;
-                final nameTa = data['name_ta'] as String? ?? '';
-                final nameEn = data['name_en'] as String? ?? '';
-                final iconKey = data['icon'] as String? ?? '';
-
                 return _ModernCategoryCard(
-                  nameTa: nameTa,
-                  nameEn: nameEn,
-                  iconKey: iconKey,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => FarmerProductListScreen(
-                          categoryId: id,
-                          categoryNameTa: nameTa,
-                          categoryNameEn: nameEn,
-                        ),
-                      ),
-                    );
-                  },
+                  nameTa: data['name_ta'] ?? '',
+                  nameEn: data['name_en'] ?? '',
+                  iconKey: data['icon'] ?? '',
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FarmerProductListScreen(categoryId: docs[index].id, categoryNameTa: data['name_ta'] ?? '', categoryNameEn: data['name_en'] ?? ''))),
                 );
               },
               childCount: docs.length,
@@ -221,54 +179,21 @@ class _FarmerCategoriesScreenState extends State<FarmerCategoriesScreen> {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance.collection('products').snapshots(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator()));
-        }
-
         final allProducts = snapshot.data?.docs ?? [];
-        final filteredProducts = allProducts.where((doc) {
+        final filtered = allProducts.where((doc) {
           final data = doc.data();
           final nameEn = (data['name_en'] as String? ?? '').toLowerCase();
           final nameTa = (data['name_ta'] as String? ?? '').toLowerCase();
           return nameEn.contains(_searchQuery) || nameTa.contains(_searchQuery);
         }).toList();
 
-        if (filteredProducts.isEmpty) {
-          return SliverToBoxAdapter(
-            child: Center(
-              child: Column(
-                children: [
-                   const SizedBox(height: 40),
-                   Icon(Icons.search_off, size: 64, color: Colors.grey.shade300),
-                   const SizedBox(height: 16),
-                   Text(
-                      LocalizationService.isTamil ? 'முடிவுகள் ஏதுமில்லை' : 'No products found',
-                      style: GoogleFonts.poppins(color: AppColors.textSecondary),
-                   ),
-                ],
-              ),
-            ),
-          );
-        }
+        if (filtered.isEmpty) return const SliverToBoxAdapter(child: Center(child: Padding(padding: EdgeInsets.all(40), child: Text("No products found"))));
 
         return SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              childAspectRatio: 0.68,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                return ProductGridCard(
-                  productId: filteredProducts[index].id,
-                  data: filteredProducts[index].data(),
-                );
-              },
-              childCount: filteredProducts.length,
-            ),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 16, crossAxisSpacing: 16, childAspectRatio: 0.7),
+            delegate: SliverChildBuilderDelegate((context, index) => ProductGridCard(productId: filtered[index].id, data: filtered[index].data()), childCount: filtered.length),
           ),
         );
       },
@@ -276,164 +201,50 @@ class _FarmerCategoriesScreenState extends State<FarmerCategoriesScreen> {
   }
 
   Widget _buildHorizontalCategoryLists() {
-    final isTa = LocalizationService.isTamil;
-    const categoriesToShow = [
+    const categories = [
       {'id': 'seeds', 'en': 'Seeds', 'ta': 'விதைகள்'},
       {'id': 'fertilizers', 'en': 'Fertilizers', 'ta': 'உரங்கள்'},
-      {'id': 'pesticides', 'en': 'Pesticides', 'ta': 'பூச்சிக்கொல்லிகள்'},
-      {'id': 'pgr', 'en': 'Growth Regulators (PGR)', 'ta': 'வளர்ச்சி ஊக்கிகள்'},
-      {'id': 'biopesticides', 'en': 'Bio Pesticides', 'ta': 'உயிர் பூச்சிக்கொல்லிகள்'},
     ];
 
     return SliverList(
       delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final cat = categoriesToShow[index];
-          return _buildHorizontalCategoryRow(cat, isTa);
-        },
-        childCount: categoriesToShow.length,
+        (context, index) => _buildHorizontalCategoryRow(categories[index]),
+        childCount: categories.length,
       ),
     );
   }
 
-  Widget _buildHorizontalCategoryRow(Map<String, String> cat, bool isTa) {
+  Widget _buildHorizontalCategoryRow(Map<String, String> cat) {
+    final isTa = LocalizationService.isTamil;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                isTa ? cat['ta']! : cat['en']!,
-                style: GoogleFonts.notoSansTamil(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              TextButton(
-                onPressed: () {
-                   Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => FarmerProductListScreen(
-                        categoryId: cat['id']!,
-                        categoryNameTa: cat['ta']!,
-                        categoryNameEn: cat['en']!,
-                      ),
-                    ),
-                  );
-                },
-                child: Text(isTa ? 'அனைத்தையும் காண்க' : 'See All'),
-              ),
+              Text(isTa ? cat['ta']! : cat['en']!, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
+              TextButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FarmerProductListScreen(categoryId: cat['id']!, categoryNameTa: cat['ta']!, categoryNameEn: cat['en']!))), child: const Text('See All')),
             ],
           ),
         ),
         SizedBox(
-          height: 240,
+          height: 220,
           child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            stream: FirebaseFirestore.instance
-                .collection('products')
-                .where('categoryId', isEqualTo: cat['id'])
-                .limit(5)
-                .snapshots(),
+            stream: FirebaseFirestore.instance.collection('products').where('categoryId', isEqualTo: cat['id']).limit(5).snapshots(),
             builder: (context, snapshot) {
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return const SizedBox();
-              }
-              final docs = snapshot.data!.docs;
-              return ListView.separated(
+              final docs = snapshot.data?.docs ?? [];
+              return ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 scrollDirection: Axis.horizontal,
                 itemCount: docs.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
-                itemBuilder: (context, index) {
-                  return SizedBox(
-                    width: 160,
-                    child: ProductGridCard(
-                      productId: docs[index].id,
-                      data: docs[index].data(),
-                    ),
-                  );
-                },
+                itemBuilder: (context, index) => Padding(padding: const EdgeInsets.only(right: 12), child: SizedBox(width: 150, child: ProductGridCard(productId: docs[index].id, data: docs[index].data()))),
               );
             },
           ),
         ),
-        const SizedBox(height: 24),
       ],
-    );
-  }
-}
-
-class _FeaturedCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final Color color;
-  final String imageAsset;
-  final IconData icon;
-  final Color iconColor;
-
-  const _FeaturedCard({
-    required this.title,
-    required this.subtitle,
-    required this.color,
-    required this.imageAsset,
-    required this.icon,
-    required this.iconColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 140,
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.4),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Container(
-             padding: const EdgeInsets.all(8),
-             decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.6),
-                shape: BoxShape.circle,
-             ),
-             child: Icon(icon, color: iconColor, size: 28),
-          ),
-          Column(
-             crossAxisAlignment: CrossAxisAlignment.start,
-             children: [
-                Text(
-                  title,
-                  style: GoogleFonts.poppins(
-                     fontSize: 14,
-                     fontWeight: FontWeight.bold,
-                     color: const Color(0xFF1A1C1E),
-                     height: 1.2
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: GoogleFonts.poppins(
-                     fontSize: 12,
-                     fontWeight: FontWeight.w600,
-                     color: iconColor
-                  ),
-                ),
-             ],
-          )
-        ],
-      ),
     );
   }
 }
@@ -444,72 +255,42 @@ class _ModernCategoryCard extends StatelessWidget {
   final String iconKey;
   final VoidCallback onTap;
 
-  const _ModernCategoryCard({
-    required this.nameTa,
-    required this.nameEn,
-    required this.iconKey,
-    required this.onTap,
-  });
-
-  IconData _resolveIcon(String key) {
-     switch (key) {
-       case 'seeds': return Icons.spa;
-       case 'fertilizers': return Icons.grass;
-       case 'pesticides': return Icons.bug_report;
-       case 'tools': return Icons.handyman;
-       case 'machinery': return Icons.agriculture;
-       case 'irrigation': return Icons.water_drop;
-       default: return Icons.category;
-     }
-  }
+  const _ModernCategoryCard({required this.nameTa, required this.nameEn, required this.iconKey, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final icon = _resolveIcon(iconKey);
     final isTa = LocalizationService.isTamil;
-    final primary = isTa ? nameTa : nameEn;
-
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ],
+          border: Border.all(color: AppColors.border),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-             // Iconic Circle
              Container(
-                width: 70,
-                height: 70,
-                decoration: BoxDecoration(
-                   color: const Color(0xFFF5F5F5),
-                   shape: BoxShape.circle,
-                ),
-                child: Icon(icon, size: 32, color: AppColors.primary),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: AppColors.primaryContainer, shape: BoxShape.circle),
+                child: Icon(_resolveIcon(iconKey), size: 28, color: AppColors.primary),
              ),
-             const SizedBox(height: 16),
-             Text(
-                primary,
-                style: GoogleFonts.notoSansTamil(
-                   fontSize: 16,
-                   fontWeight: FontWeight.bold,
-                   color: AppColors.textPrimary
-                ),
-                textAlign: TextAlign.center,
-             ),
+             const SizedBox(height: 12),
+             Text(isTa ? nameTa : nameEn, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary), textAlign: TextAlign.center),
           ],
         ),
       ),
     );
+  }
+
+  IconData _resolveIcon(String key) {
+     switch (key) {
+       case 'seeds': return Icons.spa_rounded;
+       case 'fertilizers': return Icons.grass_rounded;
+       case 'pesticides': return Icons.bug_report_rounded;
+       default: return Icons.category_rounded;
+     }
   }
 }

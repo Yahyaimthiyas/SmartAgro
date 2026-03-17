@@ -13,6 +13,8 @@ class FeedbackScreen extends StatefulWidget {
   final List<Map<String, dynamic>> items;
   final bool isAdviceFeedback;
   final String? diseaseName;
+  final String? existingFeedbackId;
+  final Map<String, dynamic>? existingData;
 
   const FeedbackScreen({
     super.key,
@@ -20,6 +22,8 @@ class FeedbackScreen extends StatefulWidget {
     required this.items,
     this.isAdviceFeedback = false,
     this.diseaseName,
+    this.existingFeedbackId,
+    this.existingData,
   });
 
   @override
@@ -34,12 +38,60 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   final _picker = ImagePicker();
   String? _selectedProductId;
   String _adviceEffectiveness = 'worked'; // 'worked', 'partial', 'not_worked'
+  Set<String> _reviewedProductIds = {};
+  bool _checkingExisting = true;
 
   @override
   void initState() {
     super.initState();
-    if (widget.items.isNotEmpty) {
-      _selectedProductId = widget.items.first['productId'];
+    if (widget.existingData != null) {
+      _commentController.text = widget.existingData!['comment'] ?? '';
+      _rating = widget.existingData!['rating'] ?? 5;
+      _selectedProductId = widget.existingData!['productId'];
+      _adviceEffectiveness = widget.existingData!['adviceEffectiveness'] ?? 'worked';
+      _checkingExisting = false;
+    } else {
+      _checkExistingReviews();
+    }
+  }
+
+  Future<void> _checkExistingReviews() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('feedbacks')
+          .where('userId', isEqualTo: user.uid)
+          .get();
+      
+      final reviewed = snap.docs
+          .map((d) => d.data()['productId'] as String?)
+          .where((id) => id != null)
+          .cast<String>()
+          .toSet();
+
+      if (mounted) {
+        setState(() {
+          _reviewedProductIds = reviewed;
+          _checkingExisting = false;
+          
+          // Filter out already reviewed items from the selection list
+          // Handle both 'productId' (from order items) and 'id' (from recommended items)
+          final availableItems = widget.items.where((it) {
+             final pid = it['productId'] ?? it['id'];
+             return pid != null && !_reviewedProductIds.contains(pid);
+          }).toList();
+
+          if (availableItems.isNotEmpty) {
+            _selectedProductId = availableItems.first['productId'] ?? availableItems.first['id'];
+          } else {
+            _selectedProductId = null;
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _checkingExisting = false);
     }
   }
 
@@ -55,6 +107,18 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   Future<void> _submitFeedback() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
+    
+    // For normal reviews, a product must be selected.
+    // For advice feedback, we can allow rating the advice itself even without a specific product selected.
+    if (!widget.isAdviceFeedback && _selectedProductId == null) return;
+
+    // Double check to prevent concurrent submissions for the same product, but allow if editing existing
+    if (widget.existingFeedbackId == null && _selectedProductId != null && _reviewedProductIds.contains(_selectedProductId)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(LocalizationService.isTamil ? 'நீங்கள் ஏற்கனவே இந்தத் தயாரிப்பைப் பற்றி கருத்து தெரிவித்துள்ளீர்கள்.' : 'You have already reviewed this product.')),
+      );
+      return;
+    }
 
     setState(() => _isSubmitting = true);
 
@@ -69,9 +133,15 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         imageUrl = await storageRef.getDownloadURL();
       }
 
-      final productName = widget.items.firstWhere((it) => it['productId'] == _selectedProductId)['name_en'] ?? 'Product';
+      String productName = widget.existingData?['productName'] ?? 'Product';
+      if (_selectedProductId != null && widget.items.isNotEmpty) {
+        try {
+          final selectedItem = widget.items.firstWhere((it) => (it['productId'] ?? it['id']) == _selectedProductId);
+          productName = selectedItem['name_en'] ?? productName;
+        } catch (_) {}
+      }
 
-      await FirebaseFirestore.instance.collection('feedbacks').add({
+      final feedbackData = {
         'userId': user.uid,
         'userName': user.displayName ?? 'Farmer',
         'orderId': widget.orderId,
@@ -79,16 +149,26 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         'productName': productName,
         'rating': _rating,
         'comment': _commentController.text.trim(),
-        'imageUrl': imageUrl,
+        'imageUrl': imageUrl ?? widget.existingData?['imageUrl'],
         'isAdviceFeedback': widget.isAdviceFeedback,
         'adviceEffectiveness': widget.isAdviceFeedback ? _adviceEffectiveness : null,
-        'diseaseName': widget.diseaseName,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+        'diseaseName': widget.diseaseName ?? widget.existingData?['diseaseName'],
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      if (widget.existingFeedbackId != null) {
+        await FirebaseFirestore.instance
+            .collection('feedbacks')
+            .doc(widget.existingFeedbackId)
+            .update(feedbackData);
+      } else {
+        feedbackData['createdAt'] = FieldValue.serverTimestamp();
+        await FirebaseFirestore.instance.collection('feedbacks').add(feedbackData);
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(LocalizationService.isTamil ? 'கருத்து சமர்ப்பிக்கப்பட்டது. நன்றி!' : 'Feedback submitted. Thank you!')),
+          SnackBar(content: Text(LocalizationService.isTamil ? 'கருத்து சேமிக்கப்பட்டது. நன்றி!' : 'Feedback saved. Thank you!')),
         );
         Navigator.pop(context);
       }
@@ -115,7 +195,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold),
         ),
       ),
-      body: SingleChildScrollView(
+      body: _checkingExisting 
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,7 +222,34 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               style: GoogleFonts.notoSansTamil(fontSize: 14, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 12),
-            Container(
+            if (widget.existingFeedbackId != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Text(
+                  widget.existingData?['productName'] ?? (isTa ? 'தயாரிப்பு' : 'Product'),
+                  style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                ),
+              )
+            else if (_selectedProductId == null) 
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  isTa ? 'இந்த ஆர்டரில் உள்ள அனைத்து தயாரிப்புகளும் ஏற்கனவே மதிப்பாய்வு செய்யப்பட்டுள்ளன.' : 'All products in this order have already been reviewed.',
+                  style: TextStyle(color: Colors.red.shade900, fontSize: 13),
+                ),
+              )
+            else
+              Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey.shade300),
@@ -150,10 +259,13 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 child: DropdownButton<String>(
                   value: _selectedProductId,
                   isExpanded: true,
-                  items: widget.items.map((item) {
+                  items: widget.items.where((it) {
+                    final pid = it['productId'] ?? it['id'];
+                    return pid != null && !_reviewedProductIds.contains(pid);
+                  }).map((item) {
                     final name = LocalizationService.pickTaEn(item['name_ta'], item['name_en']);
                     return DropdownMenuItem(
-                      value: item['productId'] as String,
+                      value: (item['productId'] ?? item['id']) as String,
                       child: Text(name, style: GoogleFonts.notoSansTamil(fontSize: 14)),
                     );
                   }).toList(),
@@ -239,7 +351,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitFeedback,
+                onPressed: (_isSubmitting || (!widget.isAdviceFeedback && _selectedProductId == null)) ? null : _submitFeedback,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

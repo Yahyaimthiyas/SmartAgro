@@ -36,7 +36,6 @@ class OwnerReportsScreen extends StatelessWidget {
           double onlineRev = 0;
           double offlineRev = 0;
           
-          final Map<String, double> villageSales = {};
           final Map<int, int> hourlyStats = {}; // Hour -> Order Count
           
           final Map<String, List<Map<String, dynamic>>> groupedByMonth = {};
@@ -73,11 +72,6 @@ class OwnerReportsScreen extends StatelessWidget {
               onlineRev += amount;
             }
 
-            // Village stats
-            final village = data['customerVillage'] as String? ?? (isTa ? 'தெரியவில்லை' : 'Unknown');
-            if (village.isNotEmpty) {
-              villageSales[village] = (villageSales[village] ?? 0) + amount;
-            }
 
             // Farmer stats
             final farmerId = data['userId'] as String? ?? data['farmerId'] as String?;
@@ -116,12 +110,6 @@ class OwnerReportsScreen extends StatelessWidget {
                 _RevenueBanner(total: totalRevenue),
                 const SizedBox(height: 24),
                 
-                // --- VILLAGE-WISE SALES (NEW) ---
-                _SectionHeader(isTa ? 'கிராமவாரியாக விற்பனை' : 'Village-wise Sales'),
-                const SizedBox(height: 12),
-                _VillageSalesCard(villageSales: villageSales),
-                const SizedBox(height: 24),
-
                 // --- TOP LOYAL FARMERS (NEW) ---
                 _SectionHeader(isTa ? 'சிறந்த விசுவாசமான விவசாயிகள்' : 'Top Loyal Farmers'),
                 const SizedBox(height: 12),
@@ -326,44 +314,6 @@ class _MonthExpansionTile extends StatelessWidget {
 
 // --- NEW WIDGETS ---
 
-class _VillageSalesCard extends StatelessWidget {
-  final Map<String, double> villageSales;
-  const _VillageSalesCard({required this.villageSales});
-
-  @override
-  Widget build(BuildContext context) {
-    final sorted = villageSales.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-    final top = sorted.take(5).toList();
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
-      child: Column(
-        children: top.map((e) {
-          final p = villageSales.values.reduce((a, b) => a + b);
-          final ratio = p > 0 ? (e.value / p) : 0.0;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(e.key, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    Text('₹${e.value.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                LinearProgressIndicator(value: ratio, color: Colors.blue, backgroundColor: Colors.blue.withOpacity(0.1), minHeight: 4),
-              ],
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
 
 class _BusyHourCard extends StatelessWidget {
   final Map<int, int> hourlyStats;
