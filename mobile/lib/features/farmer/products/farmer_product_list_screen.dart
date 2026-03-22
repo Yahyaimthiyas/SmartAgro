@@ -190,7 +190,7 @@ class _FarmerProductListScreenState extends State<FarmerProductListScreen> {
     
     if (widget.categoryId != null) {
       if (widget.categoryId == 'offers') {
-        query = query.where('offerPercentage', isGreaterThan: 0);
+        query = query.where('isOfferActive', isEqualTo: true);
       } else {
         query = query.where('categoryId', isEqualTo: widget.categoryId);
       }

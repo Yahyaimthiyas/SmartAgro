@@ -21,7 +21,6 @@ class _OwnerOrdersScreenState extends State<OwnerOrdersScreen> with SingleTicker
   String _statusFilter = 'all'; 
   String _searchQuery = '';
   String _paymentFilter = 'all'; 
-  String _orderSourceFilter = 'all'; // all, online, offline
   bool _adviceOnly = false;
   bool _showFilters = false;
 
@@ -129,7 +128,7 @@ class _OwnerOrdersScreenState extends State<OwnerOrdersScreen> with SingleTicker
   }
 
   bool _hasActiveFilters() {
-    return _paymentFilter != 'all' || _orderSourceFilter != 'all' || _adviceOnly || _statusFilter != 'all';
+    return _paymentFilter != 'all' || _adviceOnly || _statusFilter != 'all';
   }
 
   void _showFilterBottomSheet() {
@@ -148,12 +147,6 @@ class _OwnerOrdersScreenState extends State<OwnerOrdersScreen> with SingleTicker
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               const SizedBox(height: 16),
-              _buildFilterSection(
-                LocalizationService.isTamil ? 'ஆர்டர் வகை' : 'Order Source',
-                ['all', 'online', 'offline'],
-                _orderSourceFilter,
-                (v) => setState(() { _orderSourceFilter = v; setS(() {}); }),
-              ),
               _buildFilterSection(
                 LocalizationService.isTamil ? 'பணம் செலுத்துதல்' : 'Payment',
                 ['all', 'cash', 'credit'],
@@ -213,7 +206,7 @@ class _OwnerOrdersScreenState extends State<OwnerOrdersScreen> with SingleTicker
           final data = doc.data();
           final status = data['status'] as String? ?? 'reserved';
           final payment = data['paymentMethod'] as String? ?? 'cash';
-          final isOnline = data['isOnline'] ?? (data['type'] != 'direct_sale');
+          final isOnline = data['isOnline'] ?? true;
           final needsAdvice = data['needsDosageAdvice'] == true;
 
           // Tab split
@@ -222,10 +215,6 @@ class _OwnerOrdersScreenState extends State<OwnerOrdersScreen> with SingleTicker
 
           // Filters
           if (_paymentFilter != 'all' && payment != _paymentFilter) return false;
-          if (_orderSourceFilter != 'all') {
-            if (_orderSourceFilter == 'online' && !isOnline) return false;
-            if (_orderSourceFilter == 'offline' && isOnline) return false;
-          }
           if (_adviceOnly && !needsAdvice) return false;
           if (_searchQuery.isNotEmpty && !doc.id.toLowerCase().contains(_searchQuery.toLowerCase())) return false;
 
@@ -283,20 +272,6 @@ class _OwnerOrdersScreenState extends State<OwnerOrdersScreen> with SingleTicker
                             '#${doc.id.substring(0, 8).toUpperCase()}',
                             style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16),
                           ),
-                          if (!isOnline) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: AppColors.borderLight,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                'SHOP',
-                                style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
-                              ),
-                            ),
-                          ],
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -439,7 +414,7 @@ _StatusMeta _statusMeta(String status) {
       return const _StatusMeta(
         labelKey: 'status_picked_label',
         chipTextKey: 'status_picked',
-        color: Colors.green,
+        color: const Color(0xFF0EA5E9),
       );
     case 'cancelled':
       return const _StatusMeta(

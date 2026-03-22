@@ -47,14 +47,20 @@ class ProductGridCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border, width: 0.8),
+          boxShadow: [
+             BoxShadow(
+               color: Colors.black.withOpacity(0.04),
+               blurRadius: 12,
+               offset: const Offset(0, 4),
+             ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-             // Image Section
+             // Image Section (simulating the grey placeholder in the UI if no image)
              Expanded(
                 child: Stack(
                   children: [
@@ -63,10 +69,15 @@ class ProductGridCard extends StatelessWidget {
                       height: double.infinity,
                       child: ClipRRect(
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                        child: CommonImage(
-                           imageUrl: (data['imageUrl'] as String?) ?? '',
-                           fit: BoxFit.cover,
-                        ),
+                        child: (data['imageUrl'] != null && data['imageUrl'].toString().isNotEmpty) 
+                          ? CommonImage(
+                              imageUrl: data['imageUrl'] as String,
+                              fit: BoxFit.cover,
+                            )
+                          : Container(
+                              color: const Color(0xFFEEEEEE),
+                              child: const Center(child: Icon(Icons.image_outlined, color: Colors.grey, size: 32)),
+                            ),
                       ),
                     ),
                     if (offerPercent != null && offerPercent > 0)
@@ -95,70 +106,80 @@ class ProductGridCard extends StatelessWidget {
                    crossAxisAlignment: CrossAxisAlignment.start,
                    children: [
                       Text(
-                         displayName,
-                         style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                         displayName.isEmpty ? 'Product Name' : displayName,
+                         style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF222222)),
                          maxLines: 1,
                          overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                         displayUnit,
-                         style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary),
-                      ),
-                      const SizedBox(height: 8),
+                      if (displayUnit.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                           displayUnit,
+                           style: GoogleFonts.inter(fontSize: 11, color: Colors.grey.shade600),
+                        ),
+                      ],
+                      const SizedBox(height: 6),
                       
-                      Row(
-                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                         children: [
-                            Column(
-                               crossAxisAlignment: CrossAxisAlignment.start,
-                               children: [
-                                  if (PriceUtils.isOfferActuallyActive(data)) ...[
-                                    Text(
-                                      '₹${data['price']}',
-                                      style: GoogleFonts.inter(fontSize: 10, decoration: TextDecoration.lineThrough, color: AppColors.textPlaceholder),
-                                    ),
-                                    Text(
-                                      '₹${PriceUtils.calculateFinalPrice(data).toStringAsFixed(0)}',
-                                       style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.primary),
-                                    ),
-                                  ] else
-                                    Text(
-                                       '₹$price',
-                                       style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.primary),
-                                    ),
-                               ],
+                      // Price (Green)
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: PriceUtils.isOfferActuallyActive(data) ? Row(
+                          children: [
+                            Text(
+                              '₹${data['price']}',
+                              style: GoogleFonts.inter(fontSize: 10, decoration: TextDecoration.lineThrough, color: Colors.grey.shade500),
                             ),
-                            
-                            IconButton.filledTonal(
-                               onPressed: isStockOut ? null : () {
-                                  context.read<CartProvider>().addItem(
-                                     productId: productId,
-                                     nameTa: nameTa,
-                                     nameEn: nameEn,
-                                     price: PriceUtils.calculateFinalPrice(data),
-                                     unitTa: unitTa,
-                                     unitEn: unitEn,
-                                     imageUrl: data['imageUrl'] as String?,
-                                  );
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(LocalizationService.tr('snackbar_added_to_cart')),
-                                      duration: const Duration(milliseconds: 800),
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: const StadiumBorder(),
-                                    ),
-                                  );
-                               },
-                               icon: const Icon(Icons.add, size: 18),
-                               style: IconButton.styleFrom(
-                                  backgroundColor: isStockOut ? Colors.grey.shade100 : AppColors.primaryContainer,
-                                  foregroundColor: AppColors.primary,
-                                  padding: EdgeInsets.zero,
-                                  minimumSize: const Size(32, 32),
-                               ),
-                            )
-                         ],
+                            const SizedBox(width: 4),
+                            Text(
+                              '₹${PriceUtils.calculateFinalPrice(data).toStringAsFixed(0)}',
+                               style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green.shade700),
+                            ),
+                          ],
+                        ) : Text(
+                           '₹$price',
+                           style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green.shade700),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 10),
+                      
+                      // Full width Add to Cart Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 32,
+                        child: ElevatedButton(
+                           onPressed: isStockOut ? null : () {
+                              context.read<CartProvider>().addItem(
+                                 productId: productId,
+                                 nameTa: nameTa,
+                                 nameEn: nameEn,
+                                 price: PriceUtils.calculateFinalPrice(data),
+                                 unitTa: unitTa,
+                                 unitEn: unitEn,
+                                 imageUrl: data['imageUrl'] as String?,
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(LocalizationService.tr('snackbar_added_to_cart')),
+                                  duration: const Duration(milliseconds: 800),
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: const StadiumBorder(),
+                                ),
+                              );
+                           },
+                           style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFF5F5F7), // Light grey
+                              foregroundColor: const Color(0xFF333333),
+                              elevation: 0,
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                           ),
+                           child: Text(
+                             isTa ? 'கார்ட்டில் சேர்' : 'Add to Cart', 
+                             style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold),
+                           ),
+                        ),
                       )
                    ],
                 ),

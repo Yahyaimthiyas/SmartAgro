@@ -60,8 +60,8 @@ class _OwnerCropGuideScreenState extends State<OwnerCropGuideScreen> {
                 margin: const EdgeInsets.only(bottom: 16),
                 child: ExpansionTile(
                   leading: CircleAvatar(
-                    backgroundColor: AppColors.primary.withOpacity(0.1),
-                    child: const Icon(Icons.eco, color: AppColors.primary),
+                    backgroundColor: const Color(0xFF0EA5E9).withOpacity(0.1),
+                    child: const Icon(Icons.eco, color: Color(0xFF0EA5E9)),
                   ),
                   title: Text(
                     isTa && cropNameTa.isNotEmpty ? cropNameTa : cropNameEn,
@@ -106,7 +106,7 @@ class _OwnerCropGuideScreenState extends State<OwnerCropGuideScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addNewCropGuide,
-        backgroundColor: AppColors.primary,
+        backgroundColor: const Color(0xFF0EA5E9),
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text(isTa ? 'புதிய பயிர்' : 'Add New Crop', style: const TextStyle(color: Colors.white)),
       ),
@@ -127,7 +127,7 @@ class _OwnerCropGuideScreenState extends State<OwnerCropGuideScreen> {
           const SizedBox(height: 8),
           ElevatedButton(
             onPressed: _addNewCropGuide,
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0EA5E9)),
             child: Text(isTa ? 'இப்போது சேர்' : 'Add Now', style: const TextStyle(color: Colors.white)),
           )
         ],

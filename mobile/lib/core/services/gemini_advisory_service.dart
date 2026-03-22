@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 class GeminiAdvisoryService {
   // Provided API Key for the AI Plant Doctor feature
-  static const String _apiKey = 'AIzaSyCxaglskTrjSte_qjQ_jmRCpsb0LrZ0zGA';
+  static const String _apiKey = 'AIzaSyAkw9GgCbpbawdE2RYkDS_YESS5OQWTzj0';
   static const String _modelName = 'gemini-flash-latest';
 
   /// Analyzes the plant image using Gemini Flash and returns a structured diagnosis map.

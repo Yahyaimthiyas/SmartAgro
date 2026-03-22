@@ -62,14 +62,16 @@ class AppNotification {
   }
 
   static NotificationType _parseType(String? type) {
-    switch (type) {
-      case 'ORDER_UPDATE': return NotificationType.orderUpdate;
-      case 'ADVISORY': return NotificationType.advisory;
-      case 'PROMOTIONAL': return NotificationType.promotional;
-      case 'SYSTEM': return NotificationType.system;
-      case 'PAYMENT': return NotificationType.payment;
-      default: return NotificationType.unknown;
-    }
+    if (type == null) return NotificationType.unknown;
+    final t = type.toLowerCase();
+    
+    if (t.contains('order')) return NotificationType.orderUpdate;
+    if (t.contains('advisory')) return NotificationType.advisory;
+    if (t.contains('promo')) return NotificationType.promotional;
+    if (t.contains('system')) return NotificationType.system;
+    if (t.contains('payment')) return NotificationType.payment;
+    
+    return NotificationType.unknown;
   }
 
   static NotificationPriority _parsePriority(String? priority) {

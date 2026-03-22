@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Brand Colors (Google Palette)
-  static const Color primary = Color(0xFF1A73E8);        // Google Blue
-  static const Color primaryContainer = Color(0xFFD2E3FC); // Light Blue Surface
+  static const Color primary = Color(0xFF0EA5E9);        // Premium Sky Blue
+  static const Color primaryContainer = Color(0xFFE0F2FE); // Light Sky Blue
   static const Color secondary = Color(0xFF34A853);      // Google Green
   static const Color secondaryContainer = Color(0xFFE6F4EA); // Light Green Surface
   static const Color accent = Color(0xFFFBBC05);         // Google Yellow

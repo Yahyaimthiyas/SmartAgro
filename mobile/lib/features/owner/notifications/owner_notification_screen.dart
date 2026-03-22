@@ -113,9 +113,9 @@ class _NotificationCard extends StatelessWidget {
         bgColor = Colors.blue.shade50;
         break;
       case NotificationType.advisory:
-        iconColor = Colors.green;
+        iconColor = const Color(0xFF0EA5E9);
         iconData = Icons.spa_outlined;
-        bgColor = Colors.green.shade50;
+        bgColor = const Color(0xFFE0F2FE);
         break;
       case NotificationType.payment:
         iconColor = Colors.orange;

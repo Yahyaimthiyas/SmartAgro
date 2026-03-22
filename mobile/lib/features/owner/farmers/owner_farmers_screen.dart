@@ -25,7 +25,7 @@ class OwnerFarmersScreen extends StatelessWidget {
         onPressed: () => Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const OwnerCreateCustomerScreen()),
         ),
-        backgroundColor: AppColors.primary,
+        backgroundColor: const Color(0xFF0EA5E9),
         icon: const Icon(Icons.person_add_rounded, color: Colors.white),
         label: Text(
           LocalizationService.isTamil ? 'புதிய விவசாயி' : 'Add Customer',
@@ -107,7 +107,7 @@ class OwnerFarmersScreen extends StatelessWidget {
                           width: 52,
                           height: 52,
                           decoration: BoxDecoration(
-                            color: AppColors.primaryContainer,
+                            color: const Color(0xFFE0F2FE),
                             shape: BoxShape.circle,
                           ),
                           child: Center(

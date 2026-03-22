@@ -137,7 +137,7 @@ class _OwnerAlertsScreenState extends State<OwnerAlertsScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primary,
+        backgroundColor: const Color(0xFF0EA5E9),
         onPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute(
@@ -166,7 +166,7 @@ class _OwnerAlertsScreenState extends State<OwnerAlertsScreen> {
         ),
       ),
       selected: selected,
-      selectedColor: AppColors.primary,
+      selectedColor: const Color(0xFF0EA5E9),
       backgroundColor: Colors.white,
       side: selected ? BorderSide.none : BorderSide(color: Colors.grey.shade300),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -197,7 +197,7 @@ class _OwnerAlertsScreenState extends State<OwnerAlertsScreen> {
         bannerColor = Colors.amber;
         break;
       default:
-        bannerColor = AppColors.primary;
+        bannerColor = const Color(0xFF0EA5E9);
     }
 
     IconData typeIcon;

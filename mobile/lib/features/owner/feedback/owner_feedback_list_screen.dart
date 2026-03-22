@@ -171,7 +171,7 @@ class _OwnerFeedbackListScreenState extends State<OwnerFeedbackListScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(isTa ? 'உங்கள் பதில்:' : 'Your Reply:', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.primary)),
+                  Text(isTa ? 'உங்கள் பதில்:' : 'Your Reply:', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF0EA5E9))),
                   const SizedBox(height: 4),
                   Text(ownerReply, style: const TextStyle(fontSize: 12)),
                 ],

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -104,7 +105,7 @@ class _OwnerStockScreenState extends State<OwnerStockScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute(
@@ -113,16 +114,14 @@ class _OwnerStockScreenState extends State<OwnerStockScreen> {
           );
         },
         backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add_circle_outline, color: Colors.white),
-        label: Text(
-           LocalizationService.tr('btn_add'),
-           style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
+        elevation: 4,
+        child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
     );
   }
 
   Widget _buildSearchAndFilter() {
+    final isTa = LocalizationService.isTamil;
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
@@ -130,48 +129,49 @@ class _OwnerStockScreenState extends State<OwnerStockScreen> {
         children: [
           TextField(
             onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
-            style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+            style: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 14),
             decoration: InputDecoration(
-              hintText: LocalizationService.tr('search_hint'),
-              hintStyle: GoogleFonts.inter(color: AppColors.textSecondary),
-              prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary),
+              hintText: isTa ? 'தயாரிப்புகளைத் தேடு...' : 'Search products...',
+              hintStyle: GoogleFonts.inter(color: Colors.grey.shade400, fontSize: 14),
+              prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary, size: 22),
               filled: true,
-              fillColor: AppColors.background.withOpacity(0.5),
+              fillColor: const Color(0xFFF8FAFC),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: AppColors.borderLight),
+                borderRadius: BorderRadius.circular(30),
+                borderSide: BorderSide(color: Colors.grey.shade100),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: AppColors.borderLight),
+                borderRadius: BorderRadius.circular(30),
+                borderSide: BorderSide(color: Colors.grey.shade100),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(30),
                 borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
                 _FilterChip(
-                  label: "All Items", 
+                  label: isTa ? "அனைத்தும்" : "All Items", 
                   isSelected: _filter == 'all', 
-                  onTap: () => setState(() => _filter = 'all')
+                  onTap: () => setState(() => _filter = 'all'),
+                  color: const Color(0xFF0EA5E9),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 _FilterChip(
-                   label: "Low Stock (< 5)", 
+                   label: isTa ? "குறைந்த இருப்பு" : "Low Stock (< 5)", 
                    isSelected: _filter == 'low',
                    color: Colors.orange, 
                    onTap: () => setState(() => _filter = 'low')
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 _FilterChip(
-                   label: "Out of Stock", 
+                   label: isTa ? "இருப்பு இல்லை" : "Out of Stock", 
                    isSelected: _filter == 'out', 
                    color: Colors.red,
                    onTap: () => setState(() => _filter = 'out')
@@ -286,37 +286,37 @@ class _ProductStockCard extends StatelessWidget {
       stockColor = Colors.orange;
       statusText = "Low Stock";
     } else {
-      stockColor = Colors.green;
+      stockColor = const Color(0xFF0EA5E9);
       statusText = "In Stock";
     }
 
     return Container(
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20), // Rounded consistent
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 6)
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 20,
+              offset: const Offset(0, 8)
            )
         ]
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Image
           Stack(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(18),
                 child: Container(
-                   width: 100,
-                   height: 100,
-                   color: AppColors.background,
+                   width: 90,
+                   height: 90,
+                   color: const Color(0xFFF8FAFC),
                    child: imageUrl != null && imageUrl.isNotEmpty
                       ? CommonImage(imageUrl: imageUrl, fit: BoxFit.cover)
-                      : Icon(Icons.inventory_2_outlined, color: Colors.grey.shade300, size: 40),
+                      : Icon(Icons.inventory_2_outlined, color: Colors.grey.shade200, size: 36),
                 ),
               ),
               if (isOfferActive)
@@ -324,17 +324,17 @@ class _ProductStockCard extends StatelessWidget {
                   top: 0,
                   left: 0,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: const BoxDecoration(
                       color: Colors.red,
                       borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        bottomRight: Radius.circular(8),
+                        topLeft: Radius.circular(18),
+                        bottomRight: Radius.circular(12),
                       ),
                     ),
                     child: Text(
                       offerType == 'percentage' ? '${offerVal.toInt()}% OFF' : 'SALE',
-                      style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ),
                 ),
@@ -345,147 +345,98 @@ class _ProductStockCard extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Row(
-                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                    children: [
                       Expanded(
-                        child: Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                displayName,
-                                style: isTa 
-                                   ? GoogleFonts.notoSansTamil(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary)
-                                   : GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                                maxLines: 1, 
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (needsManualUpdate || nameTa.isEmpty) ...[
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.shade50,
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(color: Colors.orange.shade200),
-                                ),
-                                child: Text(
-                                  "⚠️ Info",
-                                  style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.orange.shade800),
-                                ),
-                              ),
-                            ],
-                          ],
+                        child: Text(
+                          displayName,
+                          style: isTa 
+                             ? GoogleFonts.notoSansTamil(fontSize: 15, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))
+                             : GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
+                          maxLines: 1, 
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (stock <= 5)
-                      Container(
-                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                         decoration: BoxDecoration(
-                            color: stockColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(6)
-                         ),
-                         child: Text(
-                            statusText,
-                            style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.bold, color: stockColor),
-                         ),
-                      )
+                      if (needsManualUpdate || nameTa.isEmpty) ...[
+                        const SizedBox(width: 6),
+                        Icon(Icons.info_outline_rounded, size: 14, color: Colors.orange.shade400),
+                      ],
                    ],
                 ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Text(
-                      '₹$price / $displayUnit',
-                      style: GoogleFonts.notoSansTamil(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textSecondary,
-                        decoration: isOfferActive ? TextDecoration.lineThrough : null,
-                      ),
-                    ),
-                    if (isOfferActive) ...[
-                      const SizedBox(width: 6),
-                      Text(
-                         '₹${PriceUtils.calculateFinalPrice(data).toStringAsFixed(0)}',
-                         style: GoogleFonts.notoSansTamil(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.red.shade700,
-                         ),
-                      ),
-                    ]
-                  ],
+                const SizedBox(height: 2),
+                Text(
+                  '₹${NumberFormat('#,##,###').format(price)} / $displayUnit',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade600,
+                    decoration: isOfferActive ? TextDecoration.lineThrough : null,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Row(
                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                    children: [
-                      // Read-only stock display
-                      Expanded(
-                        child: Container(
-                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                           decoration: BoxDecoration(
-                              color: stockColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: stockColor.withOpacity(0.3), width: 1.5)
-                           ),
-                           child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                 Icon(Icons.inventory_2_outlined, size: 18, color: stockColor),
-                                 const SizedBox(width: 6),
-                                 Flexible(
-                                   child: Text(
-                                      'Stock: $stock',
-                                      style: GoogleFonts.poppins(
-                                         fontWeight: FontWeight.bold, 
-                                         fontSize: 14,
-                                         color: stockColor,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                   ),
-                                 ),
-                              ],
-                           ),
-                        ),
+                      // Cleaner Stock Indicator
+                      Container(
+                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                         decoration: BoxDecoration(
+                            color: stockColor.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(10),
+                         ),
+                         child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                               Container(
+                                 width: 6, height: 6,
+                                 decoration: BoxDecoration(color: stockColor, shape: BoxShape.circle),
+                               ),
+                               const SizedBox(width: 6),
+                               Text(
+                                  'Stock: $stock',
+                                  style: GoogleFonts.inter(
+                                     fontWeight: FontWeight.bold, 
+                                     fontSize: 12,
+                                     color: stockColor,
+                                  ),
+                               ),
+                            ],
+                         ),
                       ),
-                      const SizedBox(width: 8),
-                      // [NEW] Reviews button
-                      IconButton(
-                        onPressed: () => _showProductReviews(context, docId, displayName),
-                        icon: const Icon(Icons.reviews_outlined, color: Colors.blueAccent),
-                        tooltip: 'View Reviews',
-                      ),
-                      const SizedBox(width: 8),
-                      // Edit button
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => OwnerEditProductScreen(productId: docId),
+                      
+                      // Action Group
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () => _showProductReviews(context, docId, displayName),
+                            icon: const Icon(Icons.chat_bubble_outline_rounded, size: 20),
+                            color: const Color(0xFF0EA5E9),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          const SizedBox(width: 4),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => OwnerEditProductScreen(productId: docId),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                               backgroundColor: AppColors.primary,
+                               foregroundColor: Colors.white,
+                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                               minimumSize: const Size(0, 36),
+                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                               elevation: 0,
                             ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                           backgroundColor: AppColors.primary,
-                           foregroundColor: Colors.white,
-                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                           ),
-                           elevation: 0,
-                        ),
-                        child: Text(
-                           'Manage',
-                           style: GoogleFonts.outfit(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                           ),
-                        ),
+                            child: Text(
+                               'Manage',
+                               style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
                       )
                    ],
                 )

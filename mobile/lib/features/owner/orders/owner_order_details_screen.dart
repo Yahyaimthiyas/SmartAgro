@@ -5,7 +5,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/colors.dart';
 import '../../../core/services/localization_service.dart';
-import '../billing/owner_invoice_screen.dart';
 import '../../notifications/repositories/notification_repository.dart';
 import '../../notifications/models/app_notification.dart';
 
@@ -479,39 +478,6 @@ class _OwnerOrderActions extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (status == 'picked') ...[
-               SizedBox(
-                 width: double.infinity,
-                 child: ElevatedButton.icon(
-                   onPressed: () {
-                      FirebaseFirestore.instance.collection('orders').doc(orderId).get().then((doc) {
-                         if (doc.exists) {
-                            Navigator.push(
-                               context,
-                               MaterialPageRoute(
-                                  builder: (_) => OwnerInvoiceScreen(
-                                     orderId: orderId,
-                                     orderData: doc.data()!,
-                                  ),
-                               ),
-                            );
-                         }
-                      });
-                   },
-                   icon: const Icon(Icons.receipt_long, color: Colors.white),
-                   label: Text(
-                     LocalizationService.isTamil ? 'பில் உருவாக்கவும்' : 'Generate Bill',
-                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                   ),
-                   style: ElevatedButton.styleFrom(
-                     backgroundColor: AppColors.primary,
-                     padding: const EdgeInsets.symmetric(vertical: 16),
-                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                   ),
-                 ),
-               ),
-               const SizedBox(height: 8),
-            ],
             Row(
               children: [
                 if (showCancel) ...[

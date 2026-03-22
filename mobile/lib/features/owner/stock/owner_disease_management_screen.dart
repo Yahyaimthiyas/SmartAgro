@@ -50,9 +50,9 @@ class _OwnerDiseaseManagementScreenState extends State<OwnerDiseaseManagementScr
         elevation: 0,
         bottom: TabBar(
           controller: _tabController,
-          labelColor: AppColors.primary,
+          labelColor: const Color(0xFF0EA5E9),
           unselectedLabelColor: Colors.grey,
-          indicatorColor: AppColors.primary,
+          indicatorColor: const Color(0xFF0EA5E9),
           tabs: [
             Tab(text: isTa ? 'நிபுணர் ஆலோசனைகள்' : 'Common Templates'),
             Tab(text: isTa ? 'புதிய கோரிக்கைகள்' : 'Farmer Requests'),
@@ -78,7 +78,7 @@ class _OwnerDiseaseManagementScreenState extends State<OwnerDiseaseManagementScr
               onPressed: () => _showAddTemplateDialog(),
               icon: const Icon(Icons.add, color: Colors.white),
               label: Text(isTa ? 'சேர்' : 'Add New', style: const TextStyle(color: Colors.white)),
-              backgroundColor: AppColors.primary,
+              backgroundColor: const Color(0xFF0EA5E9),
             )
           : null,
     );
@@ -232,7 +232,7 @@ class _DiseaseTemplateCard extends StatelessWidget {
                   children: [
                     Text(
                       data['cropName'] ?? 'No Crop',
-                      style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primary),
+                      style: GoogleFonts.notoSansTamil(fontWeight: FontWeight.bold, fontSize: 16, color: const Color(0xFF0EA5E9)),
                     ),
                     Text(
                       data['diseaseName'] ?? 'No Disease',

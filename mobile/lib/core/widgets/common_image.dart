@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class CommonImage extends StatelessWidget {
@@ -25,20 +27,37 @@ class CommonImage extends StatelessWidget {
 
     Widget imageWidget;
     
-    // Check for Base64 Data URI
     if (imageUrl!.startsWith('data:image')) {
-      try {
-        final base64String = imageUrl!.split(',').last;
-        imageWidget = Image.memory(
-          base64Decode(base64String),
-          width: width,
-          height: height,
-          fit: fit,
-          errorBuilder: (_, __, ___) => _buildPlaceholder(),
-        );
-      } catch (e) {
-        imageWidget = _buildPlaceholder();
-      }
+      final base64String = imageUrl!.split(',').last;
+      
+      return FutureBuilder<Uint8List>(
+        future: compute(base64Decode, base64String),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return SizedBox(
+              width: width, height: height,
+              child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+            );
+          }
+          if (snapshot.hasError || !snapshot.hasData) {
+            return _buildPlaceholder();
+          }
+          
+          Widget imgWidget = Image.memory(
+            snapshot.data!,
+            width: width,
+            height: height,
+            fit: fit,
+            cacheWidth: 800, // Forces downscaling during decode to prevent RAM overload
+            errorBuilder: (_, __, ___) => _buildPlaceholder(),
+          );
+          
+          if (borderRadius != null) {
+            return ClipRRect(borderRadius: borderRadius!, child: imgWidget);
+          }
+          return imgWidget;
+        },
+      );
     } 
     // Regular Network Image
     else {
@@ -47,6 +66,7 @@ class CommonImage extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
+        cacheWidth: 600, // Important fix: prevents full-res decoding of massive network images
         errorBuilder: (_, __, ___) => _buildPlaceholder(),
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
